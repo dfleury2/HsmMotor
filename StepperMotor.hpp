@@ -15,7 +15,7 @@ public:
     }
 
     void rotateStep(uint32_t step) {
-        cout << "+rotateStep" << endl;
+        cout << "+rotateStep: " << step << endl;
         m_remaining_steps = step;
     }
 
@@ -24,7 +24,7 @@ public:
     }
 
     void stepDone() {
-        cout << "+stepDone: " << m_remaining_steps << endl;
+        cout << "+stepDone: remains " << m_remaining_steps << " step(s)" << endl;
         --m_remaining_steps;
     }
 

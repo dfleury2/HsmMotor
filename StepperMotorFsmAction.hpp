@@ -4,35 +4,51 @@
 
 #include <hsm/hsm.h>
 
+#define ON_ENTRY(className)                                                                                           \
+    static constexpr auto on_entry() {                                                                                \
+        return [](const auto &event, const auto &source, const auto &target, auto &dep) {                             \
+            std::cout << "      -- " #className ": on_entry: " << source.name << " --> " << target.name << std::endl; \
+        };                                                                                                            \
+    }
+
+#define ON_EXIT(className)                                                                                           \
+    static constexpr auto on_exit() {                                                                                \
+        return [](const auto &event, const auto &source, const auto &target, auto &dep) {                            \
+            std::cout << "      -- " #className ": on_exit: " << source.name << " --> " << target.name << std::endl; \
+        };                                                                                                           \
+    }
+
+#define ON(className)   \
+    ON_ENTRY(className) \
+    ON_EXIT(className)
+
 // --------------------------------------------------------------------------
 // States
 struct Base {
     explicit Base(const char *n) : name(n) {}
     std::string name;
+};
 
-    static constexpr auto on_entry() {
-        return [](const auto &event, const auto &source, const auto &target, auto &dep) {
-            std::cout << "      -- on entry: " << source.name << " --> " << target.name << std::endl;
-        };
-    }
-    static constexpr auto on_exit() {
-        return [](const auto &event, const auto &source, const auto &target, auto &dep) {
-            std::cout << "      -- on exit: " << source.name << " --> " << target.name << std::endl;
-        };
-    }
+struct Init : Base {
+    Init() : Base("Init") {}
+    ON(Init)
 };
 
 struct Off : Base {
     Off() : Base("Off") {}
+    ON(Off)
 };
 struct Idle : Base {
     Idle() : Base("Idle") {}
+    ON(Idle)
 };
 struct Busy : Base {
     Busy() : Base("Busy") {}
+    ON(Busy)
 };
 struct BusyContinuous : Base {
     BusyContinuous() : Base("BusyContinuous") {}
+    ON(BusyContinuous)
 };
 
 // --------------------------------------------------------------------------
@@ -80,6 +96,8 @@ const auto DisableMotor = [](const auto & /* event */, const auto & /* source */
 struct On : Base {
     On() : Base("On") {}
 
+    ON(On)
+
     static constexpr auto make_transition_table() {
         // clang-format off
     return hsm::transition_table(
@@ -104,7 +122,8 @@ struct StepperMotorSm {
     return hsm::transition_table(
         // Source              + Event            [Guard]   / Action  = Target
         // +-------------------+------------------+---------+---------+----------------------+
-        * hsm::state<Off>     + hsm::event<enable>   / EnableMotor    = hsm::state<On>,
+        * hsm::state<Init>     + hsm::event<enable>   / EnableMotor    = hsm::state<On>,
+          hsm::state<Off>     + hsm::event<enable>   / EnableMotor    = hsm::state<On>,
           hsm::state<On>      + hsm::event<disable>  / DisableMotor   = hsm::state<Off>
         );
 
