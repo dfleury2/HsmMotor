@@ -1,0 +1,6 @@
+[requires]
+erikzenker-hsm/2.3.0
+
+[generators]
+CMakeDeps
+CMakeToolchain
