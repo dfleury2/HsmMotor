@@ -8,6 +8,6 @@ project(HsmStepperMotor)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(motor_action main.cpp StepperMotorFsmAction.hpp StepperMotor.hpp)
+add_executable(motor_action main.cpp StepperMotorFsmAction.hpp StepperMotorFsmEntryExit.hpp StepperMotor.hpp)
 
 target_link_libraries(motor_action PUBLIC hsm::hsm)

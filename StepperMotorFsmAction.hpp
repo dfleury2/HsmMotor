@@ -22,84 +22,81 @@
     ON_ENTRY(className) \
     ON_EXIT(className)
 
-// --------------------------------------------------------------------------
-// States
-struct Base {
-    explicit Base(const char *n) : name(n) {}
-    std::string name;
-};
 
-struct Init : Base {
-    Init() : Base("Init") {}
-    ON(Init)
-};
+namespace action {
+    // --------------------------------------------------------------------------
+    // States
+    struct Base {
+        explicit Base(const char *n) : name(n) {}
+        std::string name;
+    };
 
-struct Off : Base {
-    Off() : Base("Off") {}
-    ON(Off)
-};
-struct Idle : Base {
-    Idle() : Base("Idle") {}
-    ON(Idle)
-};
-struct Busy : Base {
-    Busy() : Base("Busy") {}
-    ON(Busy)
-};
-struct BusyContinuous : Base {
-    BusyContinuous() : Base("BusyContinuous") {}
-    ON(BusyContinuous)
-};
+    struct Off : Base {
+        Off() : Base("Off") {}
+        ON(Off)
+    };
+    struct Idle : Base {
+        Idle() : Base("Idle") {}
+        ON(Idle)
+    };
+    struct Busy : Base {
+        Busy() : Base("Busy") {}
+        ON(Busy)
+    };
+    struct BusyContinuous : Base {
+        BusyContinuous() : Base("BusyContinuous") {}
+        ON(BusyContinuous)
+    };
 
-// --------------------------------------------------------------------------
-// Events
-struct enable {};
-struct disable {};
-struct stop {};
-struct step_done {};
-struct rotate_step {
-    uint32_t steps = 0;
-};
-struct rotate_continuous {};
+    // --------------------------------------------------------------------------
+    // Events
+    struct enable {};
+    struct disable {};
+    struct stop {};
+    struct step_done {};
+    struct rotate_step {
+        uint32_t steps = 0;
+    };
+    struct rotate_continuous {};
 
-// --------------------------------------------------------------------------
-// Guards
-const auto NoMoreSteps = [](const auto & /* event */, auto & /* source */, const auto & /* target */, const auto &dep) {
-    return (dep.getRemainingSteps() <= 0);
-};
+    // --------------------------------------------------------------------------
+    // Guards
+    const auto NoMoreSteps = [](const auto & /* event */, auto & /* source */, const auto & /* target */, const auto &dep) {
+        return (dep.getRemainingSteps() <= 0);
+    };
 
-// --------------------------------------------------------------------------
-// Actions
-const auto RotateStepMotor = [](const auto &event, const auto & /* source */, const auto & /* target */, auto &dep) {
-    dep.rotateStep(event.steps);
-};
-const auto RotateContinuousMotor = [](const auto &event, const auto & /* source */, const auto & /* target */, auto &dep) {
-    dep.rotateContinuous();
-};
-const auto StopMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
-    dep.stopMotor();
-};
-const auto StepDone = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
-    dep.stepDone();
-};
-const auto EnableMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
-    dep.enableMotor();
-};
-const auto DisableMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
-    dep.disableMotor();
-};
+    // --------------------------------------------------------------------------
+    // Actions
+    const auto RotateStepMotor = [](const auto &event, const auto & /* source */, const auto & /* target */, auto &dep) {
+        dep.rotateStep(event.steps);
+    };
+    const auto RotateContinuousMotor = [](const auto &event, const auto & /* source */, const auto & /* target */, auto &dep) {
+        dep.rotateContinuous();
+    };
+    const auto StopMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
+        dep.stopMotor();
+    };
+    const auto StepDone = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
+        dep.stepDone();
+    };
+    const auto EnableMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
+        dep.enableMotor();
+    };
+    const auto DisableMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
+        dep.disableMotor();
+    };
 
-// clang-format on
+    // clang-format on
 
-// --------------------------------------------------------------------------
-// State machines
-struct On : Base {
-    On() : Base("On") {}
+    // --------------------------------------------------------------------------
+    // State machines
+    struct On : Base {
+        On() : Base("On") {}
 
-    ON(On)
+        ON(On)
 
-    static constexpr auto make_transition_table() {
-        // clang-format off
+        static constexpr auto make_transition_table() {
+            // clang-format off
     return hsm::transition_table(
         // Source              + Event            [Guard]       / Action                     = Target
         // +-------------------+------------------+-------------+----------------------------+----------------------+
@@ -111,22 +108,23 @@ struct On : Base {
           hsm::state<BusyContinuous> + hsm::event<stop>         / StopMotor                  = hsm::state<Idle>
         );
 
-        // clang-format on
-    }
-};
+            // clang-format on
+        }
+    };
 
-// --------------------------------------------------------------------------
-struct StepperMotorSm {
-    static constexpr auto make_transition_table() {
-        // clang-format off
+    // --------------------------------------------------------------------------
+    struct StepperMotorSm {
+        static constexpr auto make_transition_table() {
+            // clang-format off
     return hsm::transition_table(
         // Source              + Event            [Guard]   / Action  = Target
         // +-------------------+------------------+---------+---------+----------------------+
-        * hsm::state<Init>     + hsm::event<enable>   / EnableMotor    = hsm::state<On>,
-          hsm::state<Off>     + hsm::event<enable>   / EnableMotor    = hsm::state<On>,
+        * hsm::state<Off>     + hsm::event<enable>   / EnableMotor    = hsm::state<On>,
           hsm::state<On>      + hsm::event<disable>  / DisableMotor   = hsm::state<Off>
         );
 
-        // clang-format on
-    }
-};
+            // clang-format on
+        }
+    };
+
+}// namespace action
