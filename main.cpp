@@ -3,6 +3,10 @@
 
 #include <hsm/hsm.h>
 
+#include <iostream>
+
+using namespace std;
+
 int main() {
     StepperMotor sm;
     cout << "---------------------------------------------------------------------" << endl;

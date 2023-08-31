@@ -1,6 +1,7 @@
 [requires]
 erikzenker-hsm/2.3.0
 qt/6.5.0
+fmt/9.1.0
 
 [generators]
 CMakeDeps

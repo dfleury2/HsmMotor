@@ -7,6 +7,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 CONFIG REQUIRED)
 find_package(hsm CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 project(HsmStepperMotor)
 
@@ -17,6 +18,7 @@ add_executable(motor-action
         StepperMotorFsmAction.hpp
         StepperMotorFsmEntryExit.hpp
         StepperMotor.hpp
+        StepperMotor.cpp
 )
 
 target_link_libraries(motor-action PUBLIC hsm::hsm qt::qt)
@@ -25,8 +27,9 @@ add_executable(motor-action-gui
         main-gui.cpp
         StepperMotorFsmAction.hpp
         StepperMotor.hpp
+        StepperMotor.cpp
         MotorWindow.hpp
         MotorWindow.cpp
 )
 
-target_link_libraries(motor-action-gui PUBLIC hsm::hsm qt::qt)
+target_link_libraries(motor-action-gui PUBLIC hsm::hsm qt::qt fmt::fmt)

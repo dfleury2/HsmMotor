@@ -2,6 +2,8 @@
 
 #include <QObject>
 
+#include <fmt/format.h>
+
 #include <chrono>
 
 using namespace std;
@@ -38,7 +40,7 @@ void MotorWindow::setup()
         cb_Tick->setChecked(!cb_Tick->isChecked());
         cb_IsEnable->setChecked(sm.isEnable());
         dial->setValue(sm.getAngle());
-        l_Steps_Remais->setText(("Step(s) remains: " + std::to_string(sm.getRemainingSteps())).c_str());
+        l_Steps_Remais->setText(fmt::format("Step(s) remains: {}", sm.getRemainingSteps()).c_str());
     });
     m_timer->start(std::chrono::milliseconds(250));
 }
