@@ -5,31 +5,31 @@
 using namespace std;
 
 void StepperMotor::enableMotor() {
-    cout << "+enableMotor" << endl;
+    cout << "StepperMotor::enableMotor" << endl;
     m_isEnable = true;
 }
 
 void StepperMotor::disableMotor() {
-    cout << "+disableMotor" << endl;
+    cout << "StepperMotor::disableMotor" << endl;
     m_isEnable = false;
 }
 
 void StepperMotor::rotateStep(int step) {
-    cout << "+rotateStep: " << step << endl;
+    cout << "StepperMotor::rotateStep: " << step << endl;
     m_remaining_steps = step;
 }
 
 void StepperMotor::rotateContinuous() {
-    cout << "+rotateContinuous" << endl;
+    cout << "StepperMotor::rotateContinuous" << endl;
 }
 
 void StepperMotor::stepDone() {
-    cout << "+stepDone: remains " << m_remaining_steps << " step(s)" << endl;
+    cout << "StepperMotor::stepDone: remains " << m_remaining_steps << " step(s)" << endl;
     --m_remaining_steps;
     m_angle += 10;
 }
 
 void StepperMotor::stopMotor() {
-    cout << "+stopMotor" << endl;
+    cout << "StepperMotor::stopMotor" << endl;
     m_remaining_steps = 0;
 }

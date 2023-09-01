@@ -4,12 +4,12 @@
 #include <cxxabi.h>
 
 inline
-std::string demangle(const std::string& mangled)
+std::string demangle(const char* mangled)
 {
     char* buffer;
     int status;
 
-    buffer = __cxxabiv1::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
+    buffer = __cxxabiv1::__cxa_demangle(mangled, nullptr, nullptr, &status);
 
     if (status == 0) {
         std::string n(buffer);
@@ -21,3 +21,9 @@ std::string demangle(const std::string& mangled)
         return {"demangle failure"};
     }
 }
+
+template<typename T>
+auto demangle(const T& t) { return demangle(typeid(t).name()); }
+
+template<typename T>
+auto demangle() { return demangle(typeid(std::decay_t<T>).name()); }

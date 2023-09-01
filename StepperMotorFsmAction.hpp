@@ -6,49 +6,33 @@
 
 #include <hsm/hsm.h>
 
-#define ON_ENTRY(className)                                                                                           \
+#define ON_ENTRY()                                                                                           \
     static constexpr auto on_entry() {                                                                                \
         return [](const auto &event, const auto &source, const auto &target, auto &dep) {                             \
-            std::cout << "      -- " #className ": on_entry: " << source.name << " --> " << target.name << std::endl; \
+            std::cout << "      -- State [" << demangle(source) << "]: on_entry: State [" << demangle(source) << "] --> State [" << demangle(target) << "]" << std::endl; \
         };                                                                                                            \
     }
 
-#define ON_EXIT(className)                                                                                           \
+#define ON_EXIT()                                                                                           \
     static constexpr auto on_exit() {                                                                                \
         return [](const auto &event, const auto &source, const auto &target, auto &dep) {                            \
-            std::cout << "      -- " #className ": on_exit: " << source.name << " --> " << target.name << std::endl; \
+            std::cout << "      -- State [" << demangle(source) << "]: on_exit: State [" << demangle(source) << "] --> State [" << demangle(target) << "]" << std::endl; \
         };                                                                                                           \
     }
 
-#define ON(className)   \
-    ON_ENTRY(className) \
-    ON_EXIT(className)
+#define ON()   \
+    ON_ENTRY() \
+    ON_EXIT()
 
 
 namespace action {
     // --------------------------------------------------------------------------
     // States
-    struct Base {
-        explicit Base(const char *n) : name(n) {}
-        std::string name;
-    };
-
-    struct Off : Base {
-        Off() : Base("Off") {}
-        ON(Off)
-    };
-    struct Idle : Base {
-        Idle() : Base("Idle") {}
-        ON(Idle)
-    };
-    struct Busy : Base {
-        Busy() : Base("Busy") {}
-        ON(Busy)
-    };
-    struct BusyContinuous : Base {
-        BusyContinuous() : Base("BusyContinuous") {}
-        ON(BusyContinuous)
-    };
+    struct Off {ON();};
+    struct On {ON();};
+    struct Idle {ON();};
+    struct Busy {ON();};
+    struct BusyContinuous {ON();};
 
     // --------------------------------------------------------------------------
     // Events
@@ -61,36 +45,46 @@ namespace action {
     };
     struct rotate_continuous {};
 
+    const auto Logger = [](const std::string& type, const auto& event, const auto& source, const auto& target) {
+        std::cout << "      -- " << type << ": Event [" << demangle(event) << "], source [" << demangle(source) << "], target [" << demangle(target) << "]" << std::endl; \
+    };
+
+
     // --------------------------------------------------------------------------
     // Guards
-    const auto NoMoreSteps = [](const auto & /* event */, auto & /* source */, const auto & /* target */, const auto &dep) {
-        return (dep.getRemainingSteps() <= 0);
+    const auto NoMoreSteps = [](const auto & event, auto & source, const auto & target, const auto &dep) {
+        static const std::string str = "Guard: ";
+
+        auto guard = (dep.getRemainingSteps() <= 0);
+
+        Logger(str + (guard ? "true" : "false"), event, source, target);
+        return guard;
     };
 
     // --------------------------------------------------------------------------
     // Actions
-    const auto RotateStepMotor = [](const auto &event, const auto & /* source */, const auto & /* target */, auto &dep) {
-        std::cout << "    --- action: RotateStepMotor" << std::endl;
+    const auto RotateStepMotor = [](const auto &event, const auto & source, const auto & target, auto &dep) {
+        Logger("Action", event, source, target);
         dep.rotateStep(event.steps);
     };
-    const auto RotateContinuousMotor = [](const auto &event, const auto & /* source */, const auto & /* target */, auto &dep) {
-        std::cout << "    --- action: RotateContinuousMotor" << std::endl;
+    const auto RotateContinuousMotor = [](const auto &event, const auto & source, const auto & target, auto &dep) {
+        Logger("Action", event, source, target);
         dep.rotateContinuous();
     };
-    const auto StopMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
-        std::cout << "    --- action: StopMotor" << std::endl;
+    const auto StopMotor = [](const auto & event, const auto & source, const auto & target, auto &dep) {
+        Logger("Action", event, source, target);
         dep.stopMotor();
     };
-    const auto StepDone = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
-        std::cout << "    --- action: StepDone" << std::endl;
+    const auto StepDone = [](const auto & event, const auto & source, const auto & target, auto &dep) {
+        Logger("Action", event, source, target);
         dep.stepDone();
     };
-    const auto EnableMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
-        std::cout << "    --- action: EnableMotor" << std::endl;
+    const auto EnableMotor = [](const auto & event, const auto & source, const auto & target, auto &dep) {
+        Logger("Action", event, source, target);
         dep.enableMotor();
     };
-    const auto DisableMotor = [](const auto & /* event */, const auto & /* source */, const auto & /* target */, auto &dep) {
-        std::cout << "    --- action: DisableMotor" << std::endl;
+    const auto DisableMotor = [](const auto & event, const auto & source, const auto & target, auto &dep) {
+        Logger("Action", event, source, target);
         dep.disableMotor();
     };
 
@@ -98,30 +92,30 @@ namespace action {
 
     // --------------------------------------------------------------------------
     // State machines
-    struct On : Base {
-        On() : Base("On") {}
-
-        ON(On)
-
-        static constexpr auto make_transition_table() {
-            // clang-format off
-            return hsm::transition_table(
-                // Source              + Event            [Guard]       / Action                     = Target
-                // +-------------------+------------------+-------------+----------------------------+----------------------+
-                * hsm::state<Idle>     + hsm::event<rotate_step>        / RotateStepMotor            = hsm::state<Busy>,
-                  hsm::state<Idle>     + hsm::event<rotate_continuous>  / RotateContinuousMotor      = hsm::state<BusyContinuous>,
-                  hsm::state<Busy>     + hsm::event<stop>               / StopMotor                  = hsm::state<Idle>,
-                  hsm::state<Busy>     + hsm::event<step_done>          / StepDone                   = hsm::state<Busy>,
-                  hsm::state<Busy>                        [NoMoreSteps] / StopMotor                  = hsm::state<Idle>,
-                  hsm::state<BusyContinuous> + hsm::event<stop>         / StopMotor                  = hsm::state<Idle>,
-                  hsm::state<BusyContinuous> + hsm::event<step_done>    / StepDone                   = hsm::state<BusyContinuous>
-                );
-            // clang-format on
-        }
-    };
+//    struct On {
+//        ON();
+//
+//        static constexpr auto make_transition_table() {
+//            // clang-format off
+//            return hsm::transition_table(
+//                // Source              + Event            [Guard]       / Action                     = Target
+//                // +-------------------+------------------+-------------+----------------------------+----------------------+
+//                * hsm::state<Idle>     + hsm::event<rotate_step>        / RotateStepMotor            = hsm::state<Busy>,
+//                  hsm::state<Idle>     + hsm::event<rotate_continuous>  / RotateContinuousMotor      = hsm::state<BusyContinuous>,
+//                  hsm::state<Busy>     + hsm::event<stop>               / StopMotor                  = hsm::state<Idle>,
+//                  hsm::state<Busy>     + hsm::event<step_done>          / StepDone                   = hsm::state<Busy>,
+//                  hsm::state<Busy>                        [NoMoreSteps] / StopMotor                  = hsm::state<Idle>,
+//                  hsm::state<BusyContinuous> + hsm::event<stop>         / StopMotor                  = hsm::state<Idle>,
+//                  hsm::state<BusyContinuous> + hsm::event<step_done>    / StepDone                   = hsm::state<BusyContinuous>
+//                );
+//            // clang-format on
+//        }
+//    };
 
     // --------------------------------------------------------------------------
     struct StepperMotorSm {
+        ON();
+
         static constexpr auto make_transition_table() {
             // clang-format off
             return hsm::transition_table(
@@ -135,9 +129,8 @@ namespace action {
         }
 
         static constexpr auto on_unexpected_event() {
-            return [](auto &event, auto currentState, auto &dep) {
-                std::cout << "StepperMotorSm: State [" << demangle(typeid(decltype(currentState)).name()) << "]"
-                          << " received unexpected event [" << demangle(typeid(decltype(event)).name()) << "]" << std::endl;
+            return [](const auto& event, const auto& currentState, const auto& dep) {
+                Logger("Unexpected", event, currentState, dep);
             };
         }
     };

@@ -2,6 +2,7 @@
 erikzenker-hsm/2.3.0
 qt/6.5.0
 fmt/9.1.0
+sml/1.1.8
 
 [generators]
 CMakeDeps

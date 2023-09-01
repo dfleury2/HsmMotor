@@ -4,19 +4,19 @@
 
 #include <hsm/hsm.h>
 
-#define ON_ENTRY(className)                                                                                           \
-    static constexpr auto on_entry() {                                                                                \
-        return [](const auto &event, const auto &source, const auto &target, auto &dep) {                             \
-            std::cout << "      -- " #className ": on_entry: " << source.name << " --> " << target.name << std::endl; \
-        };                                                                                                            \
-    }
-
-#define ON_EXIT(className)                                                                                           \
-    static constexpr auto on_exit() {                                                                                \
-        return [](const auto &event, const auto &source, const auto &target, auto &dep) {                            \
-            std::cout << "      -- " #className ": on_exit: " << source.name << " --> " << target.name << std::endl; \
-        };                                                                                                           \
-    }
+//#define ON_ENTRY(className)                                                                                           \
+//    static constexpr auto on_entry() {                                                                                \
+//        return [](const auto &event, const auto &source, const auto &target, auto &dep) {                             \
+//            std::cout << "      -- " #className ": on_entry: " << source.name << " --> " << target.name << std::endl; \
+//        };                                                                                                            \
+//    }
+//
+//#define ON_EXIT(className)                                                                                           \
+//    static constexpr auto on_exit() {                                                                                \
+//        return [](const auto &event, const auto &source, const auto &target, auto &dep) {                            \
+//            std::cout << "      -- " #className ": on_exit: " << source.name << " --> " << target.name << std::endl; \
+//        };                                                                                                           \
+//    }
 
 namespace entryexit {
     // --------------------------------------------------------------------------
@@ -46,9 +46,7 @@ namespace entryexit {
             };
         }
     };
-    struct Idle : Base {
-        Idle() : Base("Idle") {}
-        ON(Idle)
+    struct Idle {
     };
     struct Busy : Base {
         Busy() : Base("Busy") {}
@@ -56,8 +54,7 @@ namespace entryexit {
             return [](const auto &event, const auto &source, const auto &target, auto &dep) {
                 if constexpr (std::is_same_v<std::decay_t<decltype(event)>, rotate_step>) {
                     dep.rotateStep(event.steps);
-                }
-                else if constexpr (std::is_same_v<std::decay_t<decltype(event)>, step_done>) {
+                } else if constexpr (std::is_same_v<std::decay_t<decltype(event)>, step_done>) {
                     dep.stepDone();
                 }
                 std::cout << "      -- Busy : on_entry: " << source.name << " --> " << target.name << std::endl;
@@ -65,7 +62,7 @@ namespace entryexit {
         }
         static constexpr auto on_exit() {
             return [](const auto &event, const auto &source, const auto &target, auto &dep) {
-                if (source.name != target.name) { // Exclude re-entrant events
+                if (source.name != target.name) {// Exclude re-entrant events
                     dep.stopMotor();
                     std::cout << "      -- Busy : on_exit: " << source.name << " --> " << target.name << std::endl;
                 }
