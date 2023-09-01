@@ -29,7 +29,6 @@ namespace action {
     // --------------------------------------------------------------------------
     // States
     struct Off {ON();};
-    struct On {ON();};
     struct Idle {ON();};
     struct Busy {ON();};
     struct BusyContinuous {ON();};
@@ -92,25 +91,25 @@ namespace action {
 
     // --------------------------------------------------------------------------
     // State machines
-//    struct On {
-//        ON();
-//
-//        static constexpr auto make_transition_table() {
-//            // clang-format off
-//            return hsm::transition_table(
-//                // Source              + Event            [Guard]       / Action                     = Target
-//                // +-------------------+------------------+-------------+----------------------------+----------------------+
-//                * hsm::state<Idle>     + hsm::event<rotate_step>        / RotateStepMotor            = hsm::state<Busy>,
-//                  hsm::state<Idle>     + hsm::event<rotate_continuous>  / RotateContinuousMotor      = hsm::state<BusyContinuous>,
-//                  hsm::state<Busy>     + hsm::event<stop>               / StopMotor                  = hsm::state<Idle>,
-//                  hsm::state<Busy>     + hsm::event<step_done>          / StepDone                   = hsm::state<Busy>,
-//                  hsm::state<Busy>                        [NoMoreSteps] / StopMotor                  = hsm::state<Idle>,
-//                  hsm::state<BusyContinuous> + hsm::event<stop>         / StopMotor                  = hsm::state<Idle>,
-//                  hsm::state<BusyContinuous> + hsm::event<step_done>    / StepDone                   = hsm::state<BusyContinuous>
-//                );
-//            // clang-format on
-//        }
-//    };
+    struct On {
+        ON();
+
+        static constexpr auto make_transition_table() {
+            // clang-format off
+            return hsm::transition_table(
+                // Source              + Event            [Guard]       / Action                     = Target
+                // +-------------------+------------------+-------------+----------------------------+----------------------+
+                * hsm::state<Idle>     + hsm::event<rotate_step>        / RotateStepMotor            = hsm::state<Busy>,
+                  hsm::state<Idle>     + hsm::event<rotate_continuous>  / RotateContinuousMotor      = hsm::state<BusyContinuous>,
+                  hsm::state<Busy>     + hsm::event<stop>               / StopMotor                  = hsm::state<Idle>,
+                  hsm::state<Busy>     + hsm::event<step_done>          / StepDone                   = hsm::state<Busy>,
+                  hsm::state<Busy>                        [NoMoreSteps] / StopMotor                  = hsm::state<Idle>,
+                  hsm::state<BusyContinuous> + hsm::event<stop>         / StopMotor                  = hsm::state<Idle>,
+                  hsm::state<BusyContinuous> + hsm::event<step_done>    / StepDone                   = hsm::state<BusyContinuous>
+                );
+            // clang-format on
+        }
+    };
 
     // --------------------------------------------------------------------------
     struct StepperMotorSm {

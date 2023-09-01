@@ -82,7 +82,7 @@ namespace ee {
     // --------------------------------------------------------------------------
     // Actions
     const auto log = [](const auto& event, const auto& source, const auto& target) {
-        std::cout << "      -- Event [" << demangle(event) << "], source [" << demangle(source) << "], target [" << demangle(target) << "]" << std::endl;
+        std::cout << "  LOG ACTION -- Event [" << demangle(event) << "], source [" << demangle(source) << "], target [" << demangle(target) << "]" << std::endl;
     };
 
 
@@ -91,7 +91,7 @@ namespace ee {
     struct EeSm {
         static constexpr auto make_transition_table() {
             // clang-format off
-            return boost::hana::make_basic_tuple(
+            return hsm::transition_table(
                 // Source              + Event            [Guard]   / Action  = Target
                 // +-------------------+------------------+---------+---------+----------------------+
 //                * hsm::state<A1>       + hsm::event<press>                    = hsm::state<A2>,
@@ -117,9 +117,9 @@ int main() {
     std::cout << "----- process_event(press) ----- " << std::endl;
     fsm.process_event(ee::press{});
 
-//    std::cout << "----- process_event(press) ----- " << std::endl;
-//    fsm.process_event(ee::press{});
-//
-//    std::cout << "----- process_event(press) ----- " << std::endl;
-//    fsm.process_event(ee::press{});
+    std::cout << "----- process_event(press) ----- " << std::endl;
+    fsm.process_event(ee::press{});
+
+    std::cout << "----- process_event(press) ----- " << std::endl;
+    fsm.process_event(ee::press{});
 }
