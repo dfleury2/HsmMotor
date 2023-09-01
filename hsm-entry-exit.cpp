@@ -88,7 +88,7 @@ namespace ee {
 
     // --------------------------------------------------------------------------
     // State machines
-    struct EeSm {
+    struct InitialEntryExit {
         static constexpr auto make_transition_table() {
             // clang-format off
             return hsm::transition_table(
@@ -109,7 +109,7 @@ namespace ee {
 
 
 int main() {
-    hsm::sm<ee::EeSm> fsm;
+    hsm::sm<ee::InitialEntryExit> fsm;
 
     std::cout << "----- process_event(press) ----- " << std::endl;
     fsm.process_event(ee::press{});

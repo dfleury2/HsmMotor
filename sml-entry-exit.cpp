@@ -21,7 +21,7 @@ namespace ee {
 
     // --------------------------------------------------------------------------
     // State machines
-    struct EeSm {
+    struct InitialEntryExit {
         auto operator()() const {
             // clang-format off
             return boost::sml::make_transition_table(
@@ -69,7 +69,7 @@ namespace ee {
 
 int main() {
     ee::my_logger logger;
-    sml::sm<ee::EeSm, sml::logger<ee::my_logger>> fsm{logger};
+    sml::sm<ee::InitialEntryExit, sml::logger<ee::my_logger>> fsm{logger};
 
     std::cout << "----- process_event(press) ----- " << std::endl;
     fsm.process_event(ee::press{});

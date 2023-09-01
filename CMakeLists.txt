@@ -42,3 +42,6 @@ target_link_libraries(hsm-entry-exit PUBLIC hsm::hsm fmt::fmt)
 
 add_executable(sml-entry-exit sml-entry-exit.cpp)
 target_link_libraries(sml-entry-exit PUBLIC sml::sml fmt::fmt)
+
+add_executable(entry-exit entry-exit.cpp)
+target_link_libraries(entry-exit PUBLIC hsm::hsm)

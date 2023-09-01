@@ -1,11 +1,15 @@
 #pragma once
 
 #include <string>
+
+#ifdef __linux__
 #include <cxxabi.h>
+#endif
 
 inline
 std::string demangle(const char* mangled)
 {
+#ifdef __linux__
     char* buffer;
     int status;
 
@@ -20,6 +24,9 @@ std::string demangle(const char* mangled)
     else {
         return {"demangle failure"};
     }
+#else
+    return mangled;
+#endif
 }
 
 template<typename T>
