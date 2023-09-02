@@ -12,7 +12,7 @@ find_package(sml CONFIG REQUIRED)
 
 project(HsmStepperMotor)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 add_executable(generate_plantuml generate_plantuml.cpp)
 
@@ -36,6 +36,16 @@ add_executable(motor-action-gui
 )
 
 target_link_libraries(motor-action-gui PUBLIC hsm::hsm qt::qt fmt::fmt)
+
+if(WIN32)
+    target_link_libraries(motor-action-gui
+        PUBLIC
+            DWrite.lib
+            Shcore.lib
+            D3d9.lib
+    )
+endif()
+
 
 add_executable(hsm-entry-exit hsm-entry-exit.cpp)
 target_link_libraries(hsm-entry-exit PUBLIC hsm::hsm fmt::fmt)

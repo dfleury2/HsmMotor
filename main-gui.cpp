@@ -8,13 +8,17 @@
 
 #if __linux__
 Q_IMPORT_PLUGIN(QXcbIntegrationPlugin)
+#else
+Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 #endif
+
 
 // --------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
+#if __linux__
     setenv("FONTCONFIG_PATH", "/etc/fonts", false);
-
+#endif
     try {
         QApplication app(argc, argv);
 
