@@ -55,8 +55,8 @@ namespace ee {
 
     // --------------------------------------------------------------------------
     // Actions
-    const auto log = [](auto event, auto source, auto target) {
-        std::cout << boost::hana::experimental::print(typeid_(source)) << " + "
+    const auto log = [](auto event, auto source, auto target, const char* msg = "") {
+        std::cout << msg << boost::hana::experimental::print(typeid_(source)) << " + "
                   << boost::hana::experimental::print(typeid_(event)) << " = "
                   << boost::hana::experimental::print(typeid_(target)) << std::endl;
     };
@@ -69,12 +69,19 @@ namespace ee {
             return hsm::transition_table(
                 // Source              + Event            [Guard]   / Action  = Target
                 // +-------------------+------------------+---------+---------+----------------------+
-                * hsm::state<A0>                                              = hsm::state<A1>,
+                * hsm::state<A0>                                    / log     = hsm::state<A1>,
                   hsm::state<A1>       + hsm::event<press>          / log     = hsm::state<A2>,
                   hsm::state<A2>       + hsm::event<press>          / log     = hsm::state<A1>
                 );
 
             // clang-format on
+        }
+
+        static constexpr auto on_unexpected_event()
+        {
+            return [](auto& event, const auto& state) {
+                log(event, state, state, "unexpected event: ");
+            };
         }
     };
 }
