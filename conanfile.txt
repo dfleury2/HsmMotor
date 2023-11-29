@@ -1,5 +1,6 @@
 [requires]
 erikzenker-hsm/2.3.0
+doctest/2.4.10
 qt/6.5.0
 fmt/9.1.0
 sml/1.1.8
