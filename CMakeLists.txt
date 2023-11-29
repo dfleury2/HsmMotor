@@ -9,6 +9,7 @@ find_package(Qt6 CONFIG REQUIRED)
 find_package(hsm CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(sml CONFIG REQUIRED)
+find_package(doctest CONFIG REQUIRED)
 
 project(HsmStepperMotor)
 
@@ -55,3 +56,19 @@ target_link_libraries(sml-entry-exit PUBLIC sml::sml fmt::fmt)
 
 add_executable(entry-exit entry-exit.cpp)
 target_link_libraries(entry-exit PUBLIC hsm::hsm)
+
+
+add_executable(tricolor_light tricolor_light.cpp)
+target_link_libraries(tricolor_light PUBLIC hsm::hsm fmt::fmt)
+
+add_executable(tricolor_light_on_off tricolor_light_on_off.cpp)
+target_link_libraries(tricolor_light_on_off PUBLIC hsm::hsm fmt::fmt)
+
+add_executable(tricolor_light_on_off_timestamp tricolor_light_on_off_timestamp.cpp)
+target_link_libraries(tricolor_light_on_off_timestamp PUBLIC hsm::hsm fmt::fmt)
+
+enable_testing()
+
+add_subdirectory(hsm_example)
+add_subdirectory(hsm_tests)
+add_subdirectory(hsm_gui)
