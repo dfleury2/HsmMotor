@@ -58,6 +58,10 @@ add_executable(entry-exit entry-exit.cpp)
 target_link_libraries(entry-exit PUBLIC hsm::hsm)
 
 
+add_executable(sequence_calibration sequence_calibration.cpp)
+target_link_libraries(sequence_calibration PUBLIC hsm::hsm)
+
+
 add_executable(tricolor_light tricolor_light.cpp)
 target_link_libraries(tricolor_light PUBLIC hsm::hsm fmt::fmt)
 
