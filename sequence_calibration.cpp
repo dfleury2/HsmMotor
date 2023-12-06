@@ -1,3 +1,42 @@
+/*
+@startuml
+
+[*] --> Idle
+Idle --> StartCalibration : start_calibration
+state GoToLoadingPose
+StartCalibration : E: send_display_calibration_ihm\nE: send_go_to_home_robot
+ComputeTransform: E: compute_transform
+SnapshotReplyWaiting: X: find_bevel
+SnapshotRequest: E: send_snapshot_request
+MoveToCalibrationPointWaiting: E: remove_calibration_point
+MoveToCalibrationPoint: E: send_to_go_point
+GoToLoadingPose: E: send_go_to_loading_pose
+LoadConfirmation: E: send_load_confirmation_ihm
+
+state StartCalibration {
+
+[*] --> InitStartCalibration
+InitStartCalibration --> WaitingInitCalibrationRobot : ack_display_ihm
+InitStartCalibration --> WaitingInitCalibrationIHM : ack_home_pose_robot
+WaitingInitCalibrationRobot --> GoToLoadingPose : ack_home_pose_robot
+WaitingInitCalibrationIHM --> GoToLoadingPose : ack_display_ihm
+}
+GoToLoadingPose --> GoToLoadingPoseWaiting
+GoToLoadingPoseWaiting --> LoadConfirmation : ack_load_pose_robot
+LoadConfirmation --> LoadConfirmationWaiting
+LoadConfirmationWaiting --> CheckCalibrationPoint : ack_load_confirmation_ihm
+CheckCalibrationPoint --> MoveToCalibrationPoint : 2-
+CheckCalibrationPoint --> ComputeTransform : 1- [No_More_Points]
+MoveToCalibrationPoint --> MoveToCalibrationPointWaiting
+MoveToCalibrationPointWaiting --> SnapshotRequest : ack_move_point_robot
+SnapshotRequest --> SnapshotReplyWaiting
+SnapshotReplyWaiting --> CheckCalibrationPoint : ack_snapshot
+ComputeTransform --> Idle
+
+@enduml
+
+*/
+
 #include "utils.hpp"
 
 #include <fmt/format.h>
@@ -16,7 +55,7 @@ struct CalibrationContext {
 };
 
 // Events
-struct start_calibration {};
+struct calibration_start {};
 struct ack_display_ihm {};
 struct ack_home_pose_robot {};
 struct ack_load_pose_robot {};
@@ -132,7 +171,7 @@ struct ComputeTransform {
     }
 };
 
-struct InitStartCalibration {
+struct InitCalibration {
     static constexpr auto on_entry() {
         return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
             std::cout << "ENTRY: Init start calibration" << std::endl;
@@ -142,7 +181,7 @@ struct InitStartCalibration {
 struct WaitingInitCalibrationIHM {};
 struct WaitingInitCalibrationRobot {};
 
-struct StartCalibration {
+struct Calibration_IR_Robot {
     static constexpr auto on_entry() {
         return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
             std::cout << "ENTRY: start Init calibration:\n    --> Send DisplayCalibration to IHM and Send go to home pose to Robot" << std::endl;
@@ -154,8 +193,8 @@ struct StartCalibration {
         return hsm::transition_table(
               // Source                                 + Event                         [Guard]  / Action  = Target
               // +--------------------------------------+-----------------------------+---------+----------------------+
-            * hsm::state<InitStartCalibration>          + hsm::event<ack_display_ihm>            / log_action     = hsm::state<WaitingInitCalibrationRobot>,
-              hsm::state<InitStartCalibration>          + hsm::event<ack_home_pose_robot>        / log_action     = hsm::state<WaitingInitCalibrationIHM>,
+            * hsm::state<InitCalibration>          + hsm::event<ack_display_ihm>            / log_action     = hsm::state<WaitingInitCalibrationRobot>,
+              hsm::state<InitCalibration>          + hsm::event<ack_home_pose_robot>        / log_action     = hsm::state<WaitingInitCalibrationIHM>,
               hsm::state<WaitingInitCalibrationRobot>   + hsm::event<ack_home_pose_robot>                         = hsm::state<GoToLoadingPose>,
               hsm::state<WaitingInitCalibrationIHM>     + hsm::event<ack_display_ihm>                             = hsm::state<GoToLoadingPose>
         );
@@ -165,14 +204,14 @@ struct StartCalibration {
 
 
 // State Machine
-struct StateMachineCalibration {
+struct StateMachineSequencer {
     static constexpr auto make_transition_table() {
         // clang-format off
         return hsm::transition_table(
                 // Source                                 + Event                         [Guard]  / Action  = Target
                 // +--------------------------------------+-----------------------------+---------+----------------------+
-              * hsm::state<Idle>                          + hsm::event<start_calibration>         / log_action = hsm::state<StartCalibration>,
-                hsm::exit<StartCalibration, GoToLoadingPose>                                      / log_action = hsm::state<GoToLoadingPoseWaiting>,
+              * hsm::state<Idle>                          + hsm::event<calibration_start>         / log_action = hsm::state<Calibration_IR_Robot>,
+                hsm::exit<Calibration_IR_Robot, GoToLoadingPose>                                      / log_action = hsm::state<GoToLoadingPoseWaiting>,
                 hsm::state<GoToLoadingPoseWaiting>        + hsm::event<ack_load_pose_robot>       / log_action = hsm::state<LoadConfirmation>,
                 hsm::state<LoadConfirmation>                                                      / log_action = hsm::state<LoadConfirmationWaiting>,
                 hsm::state<LoadConfirmationWaiting>       + hsm::event<ack_load_confirmation_ihm> / log_action = hsm::state<CheckCalibrationPoint>,
@@ -198,7 +237,7 @@ struct StateMachineCalibration {
 int main() {
     CalibrationContext context;
 
-    hsm::sm<StateMachineCalibration, CalibrationContext> sm{context};
+    hsm::sm<StateMachineSequencer, CalibrationContext> sm{context};
 
     std::string command;
     do {
@@ -219,7 +258,7 @@ int main() {
         }
 
         if (command == "s") {
-            sm.process_event(start_calibration{});
+            sm.process_event(calibration_start{});
         } else if (command == "r") {
             sm = {context};
         } else if (command == "ai") {
