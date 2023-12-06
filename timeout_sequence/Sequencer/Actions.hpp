@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bhc/spdlog.hpp>
+#include <spdlog/spdlog.h>
 
 #include "../../utils.hpp"
 
