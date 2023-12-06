@@ -6,6 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 CONFIG REQUIRED)
+find_package(bhc-commons CONFIG REQUIRED)
 find_package(Boost CONFIG REQUIRED)
 find_package(hsm CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
@@ -58,7 +59,6 @@ target_link_libraries(sml-entry-exit PUBLIC sml::sml fmt::fmt)
 add_executable(entry-exit entry-exit.cpp)
 target_link_libraries(entry-exit PUBLIC hsm::hsm)
 
-
 add_executable(sequence_calibration sequence_calibration.cpp)
 target_link_libraries(sequence_calibration PUBLIC hsm::hsm fmt::fmt Boost::boost)
 
@@ -77,3 +77,4 @@ enable_testing()
 add_subdirectory(hsm_example)
 add_subdirectory(hsm_tests)
 add_subdirectory(hsm_gui)
+add_subdirectory(timeout_sequence)

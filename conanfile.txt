@@ -1,4 +1,5 @@
 [requires]
+bhc-commons/1.0.0-alpha.2@bhc/stable
 boost/1.81.0
 erikzenker-hsm/2.3.0
 doctest/2.4.10
