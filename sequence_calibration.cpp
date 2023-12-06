@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 using namespace boost::hana;
 using namespace std;
@@ -9,12 +10,11 @@ using namespace std;
 
 // Context
 struct CalibrationContext {
+    vector<int> points = {1, 2, 3, 4, 5};
 };
 
 // Events
-struct start_calibration {
-};
-
+struct start_calibration {};
 struct ack_display_ihm {};
 struct ack_home_pose_robot {};
 struct ack_load_pose_robot {};
@@ -84,7 +84,13 @@ struct MoveToCalibrationPoint {
     }
 };
 
-struct InitStartCalibration {};
+struct InitStartCalibration {
+    static constexpr auto on_entry() {
+        return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
+            std::cout << "ENTRY: Init start calibration" << std::endl;
+        };
+    }
+};
 struct WaitingInitCalibrationIHM {};
 struct WaitingInitCalibrationRobot {};
 
@@ -113,13 +119,13 @@ struct CalibrationSm {
     static constexpr auto make_transition_table() {
         // clang-format off
         return hsm::transition_table(
-            // Source              + Event            [Guard]   / Action  = Target
-            // +-------------------+------------------+---------+---------+----------------------+
-            * hsm::state<Idle>     + hsm::event<start_calibration>  / log = hsm::state<StartCalibration>,
-              hsm::exit<StartCalibration, GoToLoadingPose>          / log = hsm::state<GoToLoadingPoseWaiting>,
-              hsm::state<GoToLoadingPoseWaiting> + hsm::event<ack_load_pose_robot> / log = hsm::state<LoadConfirmation>,
-              hsm::state<LoadConfirmation>                          / log = hsm::state<LoadConfirmationWaiting>,
-              hsm::state<LoadConfirmationWaiting> + hsm::event<ack_load_confirmation_ihm> / log = hsm::state<MoveToCalibrationPoint>
+            // Source                                 + Event            [Guard]   / Action  = Target
+            // +--------------------------------------+---------+---------+----------------------+
+            * hsm::state<Idle>                        + hsm::event<start_calibration>  / log = hsm::state<StartCalibration>,
+              hsm::exit<StartCalibration, GoToLoadingPose>                        / log = hsm::state<GoToLoadingPoseWaiting>,
+              hsm::state<GoToLoadingPoseWaiting>      + hsm::event<ack_load_pose_robot> / log = hsm::state<LoadConfirmation>,
+              hsm::state<LoadConfirmation>                                        / log = hsm::state<LoadConfirmationWaiting>,
+              hsm::state<LoadConfirmationWaiting>     + hsm::event<ack_load_confirmation_ihm> / log = hsm::state<MoveToCalibrationPoint>
             );
 
         // clang-format on
@@ -145,6 +151,7 @@ int main() {
         cout << "ar: ack home pose robot\n";
         cout << "alp: ack load pose robot\n";
         cout << "alc: ack load confirm ihm\n";
+        cout << "r: reset\n";
         cout << "q: quit\n";
         cout << "\n> ";
         cout.flush();
@@ -155,6 +162,8 @@ int main() {
 
         if (command == "s") {
             sm.process_event(start_calibration{});
+        } else if (command == "r") {
+            sm = {context};
         } else if (command == "ai") {
             sm.process_event(ack_display_ihm{});
         } else if (command == "ar") {
