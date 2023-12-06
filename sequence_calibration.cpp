@@ -1,10 +1,12 @@
+#include "utils.hpp"
+
+#include <fmt/format.h>
 #include <hsm/hsm.h>
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-using namespace boost::hana;
 using namespace std;
 
 
@@ -19,20 +21,19 @@ struct ack_display_ihm {};
 struct ack_home_pose_robot {};
 struct ack_load_pose_robot {};
 struct ack_load_confirmation_ihm {};
+struct ack_move_point_robot {};
+struct ack_snapshot {};
 
 // Guards
-//const auto Expired = [](const auto &event, auto &source, const auto & /* target */, auto &dep) {
-//    source.remaining -= event.elapsed_time;
-//    return (source.remaining < 0s);
-//};
-
-// Actions
-const auto log = [](auto event, auto source, auto target, const auto &ctx, const char *msg = "") {
-    std::cout << msg << boost::hana::experimental::print(typeid_(source)) << " + "
-              << boost::hana::experimental::print(typeid_(event)) << " = "
-              << boost::hana::experimental::print(typeid_(target)) << std::endl;
+const auto No_More_Points = [](const auto &event, auto &source, const auto & /* target */, const auto &dep) {
+    cout << "GUARD: No_More_Points" << std::endl;
+    return dep.points.empty();
 };
 
+// Actions
+const auto log_action = [](auto event, auto source, auto target, const auto &ctx) {
+    std::cout << fmt::format("State [{}] + Event [{}] = State [{}]", demangle(source), demangle(event), demangle(target)) << std::endl;
+};
 
 // States
 struct Idle {
@@ -76,10 +77,57 @@ struct LoadConfirmationWaiting {
     }
 };
 
+struct CheckCalibrationPoint {
+    static constexpr auto on_entry() {
+        return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
+            std::cout << "ENTRY: Check Calibration Points" << std::endl;
+        };
+    }
+};
+
 struct MoveToCalibrationPoint {
     static constexpr auto on_entry() {
         return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
-            std::cout << "ENTRY: Move to calibration point" << std::endl;
+            std::cout << "ENTRY: Move to calibration point\n   --> Send go to points " << ctx.points[0] << std::endl;
+        };
+    }
+};
+
+struct MoveToCalibrationPointWaiting {
+    static constexpr auto on_entry() {
+        return [](const auto &event, const auto &source, const auto &target, auto &ctx) {
+            std::cout << "ENTRY: Move to calibration point waiting\n    --> Remove a point" << std::endl;
+            ctx.points.erase(ctx.points.begin());
+        };
+    }
+};
+
+struct SnapshotRequest {
+    static constexpr auto on_entry() {
+        return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
+            std::cout << "ENTRY: Snapshot request\n    --> Send a snapshot request" << std::endl;
+        };
+    }
+};
+
+struct SnapshotReplyWaiting {
+    static constexpr auto on_entry() {
+        return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
+            std::cout << "ENTRY: Snapshot reply waiting" << std::endl;
+        };
+    }
+
+    static constexpr auto on_exit() {
+        return [](const auto &event, const auto &source, const auto &target, auto &ctx) {
+            std::cout << "EXIT: Snapshot reply waiting\n    --> Find Bevel" << std::endl;
+        };
+    }
+};
+
+struct ComputeTransform {
+    static constexpr auto on_entry() {
+        return [](const auto &event, const auto &source, const auto &target, auto &ctx) {
+            std::cout << "ENTRY: Compute Transform\n    --> Compute transform" << std::endl;
         };
     }
 };
@@ -104,10 +152,12 @@ struct StartCalibration {
     static constexpr auto make_transition_table() {
         // clang-format off
         return hsm::transition_table(
-            * hsm::state<InitStartCalibration> + hsm::event<ack_display_ihm> / log = hsm::state<WaitingInitCalibrationRobot>,
-              hsm::state<InitStartCalibration> + hsm::event<ack_home_pose_robot> / log = hsm::state<WaitingInitCalibrationIHM>,
-              hsm::state<WaitingInitCalibrationRobot> + hsm::event<ack_home_pose_robot> = hsm::state<GoToLoadingPose>,
-              hsm::state<WaitingInitCalibrationIHM> + hsm::event<ack_display_ihm> = hsm::state<GoToLoadingPose>
+              // Source                                 + Event                         [Guard]  / Action  = Target
+              // +--------------------------------------+-----------------------------+---------+----------------------+
+            * hsm::state<InitStartCalibration>          + hsm::event<ack_display_ihm>            / log_action     = hsm::state<WaitingInitCalibrationRobot>,
+              hsm::state<InitStartCalibration>          + hsm::event<ack_home_pose_robot>        / log_action     = hsm::state<WaitingInitCalibrationIHM>,
+              hsm::state<WaitingInitCalibrationRobot>   + hsm::event<ack_home_pose_robot>                         = hsm::state<GoToLoadingPose>,
+              hsm::state<WaitingInitCalibrationIHM>     + hsm::event<ack_display_ihm>                             = hsm::state<GoToLoadingPose>
         );
         // clang-format on
     }
@@ -115,26 +165,32 @@ struct StartCalibration {
 
 
 // State Machine
-struct CalibrationSm {
+struct StateMachineCalibration {
     static constexpr auto make_transition_table() {
         // clang-format off
         return hsm::transition_table(
-            // Source                                 + Event            [Guard]   / Action  = Target
-            // +--------------------------------------+---------+---------+----------------------+
-            * hsm::state<Idle>                        + hsm::event<start_calibration>  / log = hsm::state<StartCalibration>,
-              hsm::exit<StartCalibration, GoToLoadingPose>                        / log = hsm::state<GoToLoadingPoseWaiting>,
-              hsm::state<GoToLoadingPoseWaiting>      + hsm::event<ack_load_pose_robot> / log = hsm::state<LoadConfirmation>,
-              hsm::state<LoadConfirmation>                                        / log = hsm::state<LoadConfirmationWaiting>,
-              hsm::state<LoadConfirmationWaiting>     + hsm::event<ack_load_confirmation_ihm> / log = hsm::state<MoveToCalibrationPoint>
-            );
+                // Source                                 + Event                         [Guard]  / Action  = Target
+                // +--------------------------------------+-----------------------------+---------+----------------------+
+              * hsm::state<Idle>                          + hsm::event<start_calibration>         / log_action = hsm::state<StartCalibration>,
+                hsm::exit<StartCalibration, GoToLoadingPose>                                      / log_action = hsm::state<GoToLoadingPoseWaiting>,
+                hsm::state<GoToLoadingPoseWaiting>        + hsm::event<ack_load_pose_robot>       / log_action = hsm::state<LoadConfirmation>,
+                hsm::state<LoadConfirmation>                                                      / log_action = hsm::state<LoadConfirmationWaiting>,
+                hsm::state<LoadConfirmationWaiting>       + hsm::event<ack_load_confirmation_ihm> / log_action = hsm::state<CheckCalibrationPoint>,
+                hsm::state<CheckCalibrationPoint>                                                 / log_action = hsm::state<MoveToCalibrationPoint>,
+                hsm::state<CheckCalibrationPoint>                                [No_More_Points] / log_action = hsm::state<ComputeTransform>,
+                hsm::state<MoveToCalibrationPoint>                                                / log_action = hsm::state<MoveToCalibrationPointWaiting>,
+                hsm::state<MoveToCalibrationPointWaiting> + hsm::event<ack_move_point_robot>      / log_action = hsm::state<SnapshotRequest>,
+                hsm::state<SnapshotRequest>                                                       / log_action = hsm::state<SnapshotReplyWaiting>,
+                hsm::state<SnapshotReplyWaiting>          + hsm::event<ack_snapshot>              / log_action = hsm::state<CheckCalibrationPoint>,
+                hsm::state<ComputeTransform>                                                      / log_action = hsm::state<Idle>
+        );
 
         // clang-format on
     }
 
     static constexpr auto on_unexpected_event() {
         return [](auto &event, const auto &state, const auto &ctx) {
-            std::cout << "Unexpected event: " << boost::hana::experimental::print(typeid_(event))
-                      << " for state: " << boost::hana::experimental::print(typeid_(state)) << std::endl;
+            std::cout << "Unexpected event: " << demangle(event) << " for state: " << demangle(state) << std::endl;
         };
     }
 };
@@ -142,7 +198,7 @@ struct CalibrationSm {
 int main() {
     CalibrationContext context;
 
-    hsm::sm<CalibrationSm, CalibrationContext> sm{context};
+    hsm::sm<StateMachineCalibration, CalibrationContext> sm{context};
 
     std::string command;
     do {
@@ -151,6 +207,8 @@ int main() {
         cout << "ar: ack home pose robot\n";
         cout << "alp: ack load pose robot\n";
         cout << "alc: ack load confirm ihm\n";
+        cout << "amp: ack move to point\n";
+        cout << "as: ack snapshot request\n";
         cout << "r: reset\n";
         cout << "q: quit\n";
         cout << "\n> ";
@@ -172,6 +230,10 @@ int main() {
             sm.process_event(ack_load_pose_robot{});
         } else if (command == "alc") {
             sm.process_event(ack_load_confirmation_ihm{});
+        } else if (command == "amp") {
+            sm.process_event(ack_move_point_robot{});
+        } else if (command == "as") {
+            sm.process_event(ack_snapshot{});
         }
 
     } while (command != "q");

@@ -6,6 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 CONFIG REQUIRED)
+find_package(Boost CONFIG REQUIRED)
 find_package(hsm CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(sml CONFIG REQUIRED)
@@ -59,7 +60,7 @@ target_link_libraries(entry-exit PUBLIC hsm::hsm)
 
 
 add_executable(sequence_calibration sequence_calibration.cpp)
-target_link_libraries(sequence_calibration PUBLIC hsm::hsm)
+target_link_libraries(sequence_calibration PUBLIC hsm::hsm fmt::fmt Boost::boost)
 
 
 add_executable(tricolor_light tricolor_light.cpp)
