@@ -40,6 +40,7 @@ ComputeTransform --> Idle
 */
 
 #include "Sequencer/Sequencer.hpp"
+#include "Sequencer/Timer.hpp"
 
 #include <iostream>
 #include <string>
@@ -59,6 +60,8 @@ int main()
         cout << "alc: ack load confirm ihm\n";
         cout << "amp: ack move to point\n";
         cout << "as: ack snapshot request\n";
+        cout << "t: timeout in 2s\n";
+        cout << "c: cancel timer\n";
         cout << "r: reset\n";
         cout << "q: quit\n";
         cout << "\n> ";
@@ -69,28 +72,34 @@ int main()
         }
 
         if (command == "s") {
-            sequencer.sm.process_event(calibration_start{});
+            sequencer.put(calibration_start{});
         }
         else if (command == "r") {
             sequencer.reset();
         }
+        else if (command == "t") {
+            sequencer.startTimer(std::chrono::seconds{2});
+        }
+        else if (command == "c") {
+            sequencer.cancelTimer();
+        }
         else if (command == "ai") {
-            sequencer.sm.process_event(ack_display_ihm{});
+            sequencer.put(ack_display_ihm{});
         }
         else if (command == "ar") {
-            sequencer.sm.process_event(ack_home_pose_robot{});
+            sequencer.put(ack_home_pose_robot{});
         }
         else if (command == "alp") {
-            sequencer.sm.process_event(ack_load_pose_robot{});
+            sequencer.put(ack_load_pose_robot{});
         }
         else if (command == "alc") {
-            sequencer.sm.process_event(ack_load_confirmation_ihm{});
+            sequencer.put(ack_load_confirmation_ihm{});
         }
         else if (command == "amp") {
-            sequencer.sm.process_event(ack_move_point_robot{});
+            sequencer.put(ack_move_point_robot{});
         }
         else if (command == "as") {
-            sequencer.sm.process_event(ack_snapshot{});
+            sequencer.put(ack_snapshot{});
         }
 
     } while (command != "q");

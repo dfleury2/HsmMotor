@@ -1,43 +1,100 @@
 #pragma once
 
 #include "Events.hpp"
+#include "States.hpp"
+#include "Timer.hpp"
 
 #include "../Calibration_IR_Robot/Context.hpp"
-#include "../Calibration_IR_Robot/States.hpp"
 
-#include <hsm/hsm.h>
+#include <bhc/Task.hpp>
 
-// --------------------------------------------------------------------------
-// State Machine
-struct StateMachineSequencer {
-    static constexpr auto make_transition_table()
-    {
-        // clang-format off
-        return hsm::transition_table(
-                // Source                                 + Event                         [Guard]  / Action  = Target
-                // +--------------------------------------+-----------------------------+---------+----------------------+
-              * hsm::state<Idle>                          + hsm::event<calibration_start>         / log_action = hsm::state<Calibration_IR_Robot>,
-                hsm::exit<Calibration_IR_Robot, Idle>                                             / log_action = hsm::state<Idle>
-        );
+#include <boost/asio.hpp>
 
-        // clang-format on
-    }
+#include <atomic>
+#include <thread>
 
-    static constexpr auto on_unexpected_event()
-    {
-        return [](auto& event, const auto& state, const auto& ctx) {
-            std::cout << "Unexpected event: " << demangle(event) << " for state: " << demangle(state) << std::endl;
-        };
-    }
-};
+using TaskMessage = std::variant<reset, timeout, calibration_start, ack_display_ihm, ack_home_pose_robot, ack_load_pose_robot,
+                                 ack_load_confirmation_ihm, ack_move_point_robot, ack_snapshot>;
 
 // --------------------------------------------------------------------------
-struct Sequencer {
-    CalibrationContext calibrationContext;
-    hsm::sm<StateMachineSequencer, CalibrationContext> sm{calibrationContext};
+class Sequencer {
+  public:
+    Sequencer()
+    {
+        m_task.start("sequencer", [this](TaskMessage&& msg) {
+            std::visit([this](auto&& event) { handle(std::forward<decltype(event)>(event)); }, std::move(msg));
+        });
 
-    void reset() {
+        m_thread = std::thread([this] {
+            spdlog::info("Starting ASIO thread");
+            while (!isDone()) {
+                try {
+                    spdlog::info("Starting ASIO main loop");
+                    m_ioc.run();
+                }
+                catch (const std::exception& ex) {
+                    spdlog::error("Asio error: {}", ex.what());
+                }
+            }
+        });
+    }
+
+    ~Sequencer()
+    {
+        m_task.stop();
+
+        m_is_done = true;
+
+        m_ioc.stop();
+        if (m_thread.joinable()) {
+            m_thread.join();
+        }
+    }
+
+    [[nodiscard]] bool isDone() const noexcept { return m_is_done; }
+
+    void put(TaskMessage&& msg) { m_task.put(std::move(msg)); }
+
+    void reset()
+    {
         calibrationContext = {};
         sm = {calibrationContext};
     }
+
+    void startTimer(const std::chrono::steady_clock::duration& d)
+    {
+        m_timer = after(m_ioc, d, [this]() { sm.process_event(timeout{}); });
+    }
+
+    void cancelTimer()
+    {
+        if (m_timer) {
+            m_timer->stop();
+        }
+    }
+
+    template <typename Event>
+    void handle(Event&& event)
+    {
+        sm.process_event(std::forward<Event>(event));
+    }
+
+    void handle(::reset&&) { this->reset(); }
+
+  private:
+    CalibrationContext calibrationContext;
+    hsm::sm<StateMachineSequencer, CalibrationContext> sm{calibrationContext};
+
+    // Task
+    bhc::Task<TaskMessage> m_task;
+
+    // Thread Boost ASIO
+    boost::asio::io_context m_ioc;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _work{boost::asio::make_work_guard(m_ioc)};
+
+    std::shared_ptr<Timer> m_timer;
+
+    std::thread m_thread;
+
+    std::atomic_bool m_is_done{false};
 };

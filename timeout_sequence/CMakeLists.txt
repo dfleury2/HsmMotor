@@ -1,7 +1,14 @@
 add_executable(timeout_sequence_calibration
-        main.cpp
         Calibration_IR_Robot/Context.hpp
         Calibration_IR_Robot/Events.hpp
+        Calibration_IR_Robot/Guards.hpp
+        Calibration_IR_Robot/States.hpp
+        Sequencer/Actions.hpp
+        Sequencer/Events.hpp
+        Sequencer/Sequencer.hpp
+        Sequencer/States.hpp
+        Sequencer/Timer.hpp
+        main.cpp
 )
 
 target_link_libraries(timeout_sequence_calibration
