@@ -13,8 +13,8 @@
 #include <atomic>
 #include <thread>
 
-using TaskMessage = std::variant<reset, timeout, calibration_start, ack_display_ihm, ack_home_pose_robot, ack_load_pose_robot,
-                                 ack_load_confirmation_ihm, ack_move_point_robot, ack_snapshot>;
+using TaskMessage = std::variant<reset, timeout, calibration_start, ack_display_gui, ack_home_pose_robot, ack_load_pose_robot,
+                                 ack_load_confirmation_gui, ack_move_point_robot, ack_snapshot>;
 
 // --------------------------------------------------------------------------
 class Sequencer {

@@ -2,6 +2,7 @@
 
 #include "Events.hpp"
 
+#include "../Commons/States.hpp"
 #include "../Calibration_IR_Robot/States.hpp"
 
 #include <hsm/hsm.h>
@@ -9,6 +10,19 @@
 // --------------------------------------------------------------------------
 // State Machine
 struct StateMachineSequencer {
+    static constexpr auto on_entry()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("ENTRY: StateMachineSequencer");
+        };
+    }
+    static constexpr auto on_exit()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("EXIT: StateMachineSequencer");
+        };
+    }
+
     static constexpr auto make_transition_table()
     {
         // clang-format off

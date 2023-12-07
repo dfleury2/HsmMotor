@@ -13,28 +13,6 @@
 // --------------------------------------------------------------------------
 // States
 // --------------------------------------------------------------------------
-struct Idle {
-    static constexpr auto on_entry()
-    {
-        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
-            spdlog::info("ENTRY: Idle");
-            ctx.idle();
-        };
-    }
-};
-
-// --------------------------------------------------------------------------
-struct Error {
-    static constexpr auto on_entry()
-    {
-        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
-            spdlog::info("ENTRY: Error");
-            ctx.error(demangle(event) + " on state " + demangle(source));
-        };
-    }
-};
-
-// --------------------------------------------------------------------------
 struct GoToLoadingPose {
     static constexpr auto on_entry()
     {
@@ -190,7 +168,7 @@ struct InitCalibrationWaiting {
     static constexpr auto on_entry()
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
-            spdlog::info("ENTRY: InitStartCalibration");
+            spdlog::info("ENTRY: InitCalibrationWaiting");
             ctx.startTimer(TTL);
         };
     }
@@ -228,6 +206,12 @@ struct Calibration_IR_Robot {
             ctx.send_go_home();
         };
     }
+    static constexpr auto on_exit()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("EXIT: Calibration_IR_Robot");
+        };
+    }
 
     static constexpr auto make_transition_table()
     {
@@ -235,18 +219,18 @@ struct Calibration_IR_Robot {
         return hsm::transition_table(
               // Source                                 + Event                        [Guard]       / Action          = Target
               // +--------------------------------------+-----------------------------+--------------+-----------------+-----------------------------------------+
-            * hsm::state<InitCalibrationWaiting>        + hsm::event<ack_display_ihm>                / log_action = hsm::state<InitCalibrationRobotWaiting>,
+            * hsm::state<InitCalibrationWaiting>        + hsm::event<ack_display_gui>                / log_action = hsm::state<InitCalibrationRobotWaiting>,
               hsm::state<InitCalibrationWaiting>        + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<InitCalibrationIHMWaiting>,
               hsm::state<InitCalibrationWaiting>        + hsm::event<timeout>                        / log_action = hsm::state<Error>,
               hsm::state<InitCalibrationRobotWaiting>   + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<GoToLoadingPose>,
               hsm::state<InitCalibrationRobotWaiting>   + hsm::event<timeout>                        / log_action = hsm::state<Error>,
-              hsm::state<InitCalibrationIHMWaiting>     + hsm::event<ack_display_ihm>                / log_action = hsm::state<GoToLoadingPose>,
+              hsm::state<InitCalibrationIHMWaiting>     + hsm::event<ack_display_gui>                / log_action = hsm::state<GoToLoadingPose>,
               hsm::state<InitCalibrationIHMWaiting>     + hsm::event<timeout>                        / log_action = hsm::state<Error>,
               hsm::state<GoToLoadingPose>                                                            / log_action = hsm::state<GoToLoadingPoseWaiting>,
               hsm::state<GoToLoadingPoseWaiting>        + hsm::event<ack_load_pose_robot>            / log_action = hsm::state<LoadConfirmation>,
               hsm::state<GoToLoadingPoseWaiting>        + hsm::event<timeout>                        / log_action = hsm::state<Error>,
               hsm::state<LoadConfirmation>                                                           / log_action = hsm::state<LoadConfirmationWaiting>,
-              hsm::state<LoadConfirmationWaiting>       + hsm::event<ack_load_confirmation_ihm>      / log_action = hsm::state<CheckCalibrationPoint>,
+              hsm::state<LoadConfirmationWaiting>       + hsm::event<ack_load_confirmation_gui>      / log_action = hsm::state<CheckCalibrationPoint>,
               hsm::state<LoadConfirmationWaiting>       + hsm::event<timeout>                        / log_action = hsm::state<Error>,
               hsm::state<CheckCalibrationPoint>                                                      / log_action = hsm::state<MoveToCalibrationPoint>,
               hsm::state<CheckCalibrationPoint>                                     [No_More_Points] / log_action = hsm::state<ComputeTransform>,

@@ -13,14 +13,15 @@ using timer_cb = std::function<void()>;
 class Timer : public std::enable_shared_from_this<Timer> {
   public:
     template <typename Callback>
-    Timer(boost::asio::io_context& ioc, const std::chrono::steady_clock::duration& d, Callback&& cb)
-        : m_timer(ioc), m_duration(d), m_cb(std::forward<Callback>(cb))
+    Timer(boost::asio::io_context& ioc, Callback&& cb) : m_timer(ioc), m_cb(std::forward<Callback>(cb))
     {
     }
 
-    void start()
+    ~Timer() { m_timer.cancel(); }
+
+    void start(const std::chrono::steady_clock::duration& d)
     {
-        m_timer.expires_after(m_duration);
+        m_timer.expires_after(d);
 
         m_timer.async_wait([me = shared_from_this()](const boost::system::error_code& ec) {
             if (!ec) {
@@ -33,7 +34,6 @@ class Timer : public std::enable_shared_from_this<Timer> {
 
   private:
     boost::asio::steady_timer m_timer;
-    std::chrono::steady_clock::duration m_duration;
     timer_cb m_cb;
 };
 
@@ -41,8 +41,8 @@ class Timer : public std::enable_shared_from_this<Timer> {
 template <typename Callback>
 std::shared_ptr<Timer> after(boost::asio::io_context& ioc, const duration& d, Callback&& cb)
 {
-    auto t = std::make_shared<Timer>(ioc, d, std::forward<Callback>(cb));
-    t->start();
+    auto t = std::make_shared<Timer>(ioc, std::forward<Callback>(cb));
+    t->start(d);
     return t;
 }
 

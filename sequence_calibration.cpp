@@ -56,10 +56,10 @@ struct CalibrationContext {
 
 // Events
 struct calibration_start {};
-struct ack_display_ihm {};
+struct ack_display_gui {};
 struct ack_home_pose_robot {};
 struct ack_load_pose_robot {};
-struct ack_load_confirmation_ihm {};
+struct ack_load_confirmation_gui {};
 struct ack_move_point_robot {};
 struct ack_snapshot {};
 
@@ -193,10 +193,10 @@ struct Calibration_IR_Robot {
         return hsm::transition_table(
               // Source                                 + Event                         [Guard]  / Action  = Target
               // +--------------------------------------+-----------------------------+---------+----------------------+
-            * hsm::state<InitCalibrationWaiting>          + hsm::event<ack_display_ihm>            / log_action     = hsm::state<InitCalibrationRobotWaiting>,
+            * hsm::state<InitCalibrationWaiting>          + hsm::event<ack_display_gui>            / log_action     = hsm::state<InitCalibrationRobotWaiting>,
               hsm::state<InitCalibrationWaiting>          + hsm::event<ack_home_pose_robot>        / log_action     = hsm::state<InitCalibrationIHMWaiting>,
               hsm::state<InitCalibrationRobotWaiting>   + hsm::event<ack_home_pose_robot>                         = hsm::state<GoToLoadingPose>,
-              hsm::state<InitCalibrationIHMWaiting>     + hsm::event<ack_display_ihm>                             = hsm::state<GoToLoadingPose>
+              hsm::state<InitCalibrationIHMWaiting>     + hsm::event<ack_display_gui>                             = hsm::state<GoToLoadingPose>
         );
         // clang-format on
     }
@@ -214,7 +214,7 @@ struct StateMachineSequencer {
                 hsm::exit<Calibration_IR_Robot, GoToLoadingPose>                                      / log_action = hsm::state<GoToLoadingPoseWaiting>,
                 hsm::state<GoToLoadingPoseWaiting>        + hsm::event<ack_load_pose_robot>       / log_action = hsm::state<LoadConfirmation>,
                 hsm::state<LoadConfirmation>                                                      / log_action = hsm::state<LoadConfirmationWaiting>,
-                hsm::state<LoadConfirmationWaiting>       + hsm::event<ack_load_confirmation_ihm> / log_action = hsm::state<CheckCalibrationPoint>,
+                hsm::state<LoadConfirmationWaiting>       + hsm::event<ack_load_confirmation_gui> / log_action = hsm::state<CheckCalibrationPoint>,
                 hsm::state<CheckCalibrationPoint>                                                 / log_action = hsm::state<MoveToCalibrationPoint>,
                 hsm::state<CheckCalibrationPoint>                                [No_More_Points] / log_action = hsm::state<ComputeTransform>,
                 hsm::state<MoveToCalibrationPoint>                                                / log_action = hsm::state<MoveToCalibrationPointWaiting>,
@@ -262,13 +262,13 @@ int main() {
         } else if (command == "r") {
             sm = {context};
         } else if (command == "ai") {
-            sm.process_event(ack_display_ihm{});
+            sm.process_event(ack_display_gui{});
         } else if (command == "ar") {
             sm.process_event(ack_home_pose_robot{});
         } else if (command == "alp") {
             sm.process_event(ack_load_pose_robot{});
         } else if (command == "alc") {
-            sm.process_event(ack_load_confirmation_ihm{});
+            sm.process_event(ack_load_confirmation_gui{});
         } else if (command == "amp") {
             sm.process_event(ack_move_point_robot{});
         } else if (command == "as") {

@@ -84,7 +84,7 @@ int main()
             sequencer.cancelTimer();
         }
         else if (command == "ai") {
-            sequencer.put(ack_display_ihm{});
+            sequencer.put(ack_display_gui{});
         }
         else if (command == "ar") {
             sequencer.put(ack_home_pose_robot{});
@@ -93,7 +93,7 @@ int main()
             sequencer.put(ack_load_pose_robot{});
         }
         else if (command == "alc") {
-            sequencer.put(ack_load_confirmation_ihm{});
+            sequencer.put(ack_load_confirmation_gui{});
         }
         else if (command == "amp") {
             sequencer.put(ack_move_point_robot{});
