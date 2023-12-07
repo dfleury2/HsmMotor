@@ -6,12 +6,13 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 CONFIG REQUIRED)
-find_package(bhc-commons CONFIG REQUIRED)
+#find_package(bhc-commons CONFIG REQUIRED)
 find_package(Boost CONFIG REQUIRED)
 find_package(hsm CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(sml CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 project(HsmStepperMotor)
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bhc/spdlog.hpp>
+#include <spdlog/spdlog.h>
 
 // Guards
 const auto No_More_Points = [](const auto& event, auto& source, const auto& /* target */, const auto& ctx) {

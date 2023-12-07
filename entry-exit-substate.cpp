@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "utils.hpp"
-
 #define ON_ENTRY(STATE)                                                                                                                   \
     static constexpr auto on_entry()                                                                                                      \
     {                                                                                                                                     \
@@ -42,6 +40,7 @@ struct A2 {
 // Events
 struct press {};
 struct start {};
+struct stop {};
 
 // --------------------------------------------------------------------------
 // Guard
@@ -50,12 +49,12 @@ const auto success = [](auto /*event*/, auto /*source*/, auto /*target*/) { retu
 // --------------------------------------------------------------------------
 // Actions
 const auto log = [](auto event, auto source, auto target, const char* msg = "") {
-    std::cout << msg << demangle(source) << " + " << demangle(event) << " = " << demangle(target) << std::endl;
+    std::cout << msg << typeid(source).name() << " + " << typeid(event).name() << " = " << typeid(target).name() << std::endl;
 };
 
 // --------------------------------------------------------------------------
 // State machines
-struct SubStateEntryExit {
+struct SubState {
     static constexpr auto make_transition_table()
     {
         // clang-format off
@@ -70,7 +69,7 @@ struct SubStateEntryExit {
         // clang-format on
     }
 
-    ON(InitialEntryExit);
+    ON(SubState);
 
     static constexpr auto on_unexpected_event()
     {
@@ -78,20 +77,22 @@ struct SubStateEntryExit {
     }
 };
 
-struct InitialEntryExit {
+struct Initial {
+
     static constexpr auto make_transition_table()
     {
         // clang-format off
             return hsm::transition_table(
                 // Source              + Event            [Guard]   / Action  = Target
                 // +-------------------+------------------+---------+---------+----------------------+
-                * hsm::state<Idle>       + hsm::event<start>          / log     = hsm::state<SubStateEntryExit>
+                * hsm::state<Idle>       + hsm::event<start>          / log     = hsm::state<SubState>,
+                  hsm::state<SubState>   + hsm::event<stop>           / log     = hsm::state<Idle>
                 );
 
         // clang-format on
     }
 
-    ON(InitialEntryExit);
+    ON(Initial);
 
     static constexpr auto on_unexpected_event()
     {
@@ -103,11 +104,27 @@ struct InitialEntryExit {
 
 int main()
 {
-    hsm::sm<ee::InitialEntryExit> fsm;
+    std::cout << "------------------------------------------- Initial" << std::endl;
+    {
+        hsm::sm<ee::Initial> fsm;
 
-    fsm.process_event(ee::start{});
-    for (int i = 0; i < 10; ++i) {
-        std::cout << "----- process_event(press) ----- " << std::endl;
-        fsm.process_event(ee::press{});
+        fsm.process_event(ee::start{});
+
+        for (int i = 0; i < 4; ++i) {
+            std::cout << "----- process_event(press) ----- " << std::endl;
+            fsm.process_event(ee::press{});
+        }
+
+        fsm.process_event(ee::stop{});
+    }
+
+    std::cout << "------------------------------------------- SubState" << std::endl;
+    {
+        hsm::sm<ee::SubState> fsm;
+
+        for (int i = 0; i < 4; ++i) {
+            std::cout << "----- process_event(press) ----- " << std::endl;
+            fsm.process_event(ee::press{});
+        }
     }
 }
