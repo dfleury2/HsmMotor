@@ -51,7 +51,7 @@ using namespace std;
 
 // Context
 struct CalibrationContext {
-    vector<int> points = {1, 2, 3, 4, 5};
+    vector<int> calibration_points = {1, 2, 3, 4, 5};
 };
 
 // Events
@@ -66,7 +66,7 @@ struct ack_snapshot {};
 // Guards
 const auto No_More_Points = [](const auto &event, auto &source, const auto & /* target */, const auto &dep) {
     cout << "GUARD: No_More_Points" << std::endl;
-    return dep.points.empty();
+    return dep.calibration_points.empty();
 };
 
 // Actions
@@ -127,7 +127,7 @@ struct CheckCalibrationPoint {
 struct MoveToCalibrationPoint {
     static constexpr auto on_entry() {
         return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
-            std::cout << "ENTRY: Move to calibration point\n   --> Send go to points " << ctx.points[0] << std::endl;
+            std::cout << "ENTRY: Move to calibration point\n   --> Send go to points " << ctx.calibration_points[0] << std::endl;
         };
     }
 };
@@ -136,7 +136,7 @@ struct MoveToCalibrationPointWaiting {
     static constexpr auto on_entry() {
         return [](const auto &event, const auto &source, const auto &target, auto &ctx) {
             std::cout << "ENTRY: Move to calibration point waiting\n    --> Remove a point" << std::endl;
-            ctx.points.erase(ctx.points.begin());
+            ctx.calibration_points.erase(ctx.calibration_points.begin());
         };
     }
 };
@@ -171,15 +171,15 @@ struct ComputeTransform {
     }
 };
 
-struct InitCalibration {
+struct InitCalibrationWaiting {
     static constexpr auto on_entry() {
         return [](const auto &event, const auto &source, const auto &target, const auto &ctx) {
             std::cout << "ENTRY: Init start calibration" << std::endl;
         };
     }
 };
-struct WaitingInitCalibrationIHM {};
-struct WaitingInitCalibrationRobot {};
+struct InitCalibrationIHMWaiting {};
+struct InitCalibrationRobotWaiting {};
 
 struct Calibration_IR_Robot {
     static constexpr auto on_entry() {
@@ -193,10 +193,10 @@ struct Calibration_IR_Robot {
         return hsm::transition_table(
               // Source                                 + Event                         [Guard]  / Action  = Target
               // +--------------------------------------+-----------------------------+---------+----------------------+
-            * hsm::state<InitCalibration>          + hsm::event<ack_display_ihm>            / log_action     = hsm::state<WaitingInitCalibrationRobot>,
-              hsm::state<InitCalibration>          + hsm::event<ack_home_pose_robot>        / log_action     = hsm::state<WaitingInitCalibrationIHM>,
-              hsm::state<WaitingInitCalibrationRobot>   + hsm::event<ack_home_pose_robot>                         = hsm::state<GoToLoadingPose>,
-              hsm::state<WaitingInitCalibrationIHM>     + hsm::event<ack_display_ihm>                             = hsm::state<GoToLoadingPose>
+            * hsm::state<InitCalibrationWaiting>          + hsm::event<ack_display_ihm>            / log_action     = hsm::state<InitCalibrationRobotWaiting>,
+              hsm::state<InitCalibrationWaiting>          + hsm::event<ack_home_pose_robot>        / log_action     = hsm::state<InitCalibrationIHMWaiting>,
+              hsm::state<InitCalibrationRobotWaiting>   + hsm::event<ack_home_pose_robot>                         = hsm::state<GoToLoadingPose>,
+              hsm::state<InitCalibrationIHMWaiting>     + hsm::event<ack_display_ihm>                             = hsm::state<GoToLoadingPose>
         );
         // clang-format on
     }

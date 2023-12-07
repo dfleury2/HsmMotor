@@ -57,13 +57,15 @@ class Sequencer {
 
     void reset()
     {
-        calibrationContext = {};
+        calibrationContext = CalibrationContext{*this};
         sm = {calibrationContext};
     }
 
     void startTimer(const std::chrono::steady_clock::duration& d)
     {
-        m_timer = after(m_ioc, d, [this]() { sm.process_event(timeout{}); });
+        cancelTimer();
+
+        m_timer = after(m_ioc, d, [this]() { m_task.put(timeout{}); });
     }
 
     void cancelTimer()
@@ -82,8 +84,8 @@ class Sequencer {
     void handle(::reset&&) { this->reset(); }
 
   private:
-    CalibrationContext calibrationContext;
-    hsm::sm<StateMachineSequencer, CalibrationContext> sm{calibrationContext};
+    CalibrationContext<Sequencer> calibrationContext{*this};
+    hsm::sm<StateMachineSequencer, CalibrationContext<Sequencer>> sm{calibrationContext};
 
     // Task
     bhc::Task<TaskMessage> m_task;
@@ -91,7 +93,6 @@ class Sequencer {
     // Thread Boost ASIO
     boost::asio::io_context m_ioc;
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _work{boost::asio::make_work_guard(m_ioc)};
-
     std::shared_ptr<Timer> m_timer;
 
     std::thread m_thread;

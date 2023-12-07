@@ -10,104 +10,156 @@
 #include <bhc/spdlog.hpp>
 #include <hsm/hsm.h>
 
+// --------------------------------------------------------------------------
 // States
+// --------------------------------------------------------------------------
 struct Idle {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) { spdlog::info("ENTRY: Idle"); };
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("ENTRY: Idle");
+            ctx.idle();
+        };
     }
 };
 
+// --------------------------------------------------------------------------
 struct Error {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) { spdlog::info("ENTRY: Error"); };
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("ENTRY: Error");
+            ctx.error(demangle(event) + " on state " + demangle(source));
+        };
     }
 };
 
+// --------------------------------------------------------------------------
 struct GoToLoadingPose {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: GoToLoadingPose");
-            spdlog::info("    --> Send go to loading pose to robot");
+            ctx.send_go_loading_pose();
         };
     }
 };
 
+// --------------------------------------------------------------------------
 struct GoToLoadingPoseWaiting {
+    inline static auto TTL = std::chrono::seconds{5};
+
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: GoToLoadingPoseWaiting");
+            ctx.startTimer(TTL);
+        };
+    }
+
+    static constexpr auto on_exit()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("EXIT: GoToLoadingPoseWaiting");
+            ctx.cancelTimer();
         };
     }
 };
 
+// --------------------------------------------------------------------------
 struct LoadConfirmation {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: LoadConfirmation");
-            spdlog::info("    --> Send load confirmation to ihm");
+            ctx.send_load_confirmation();
         };
     }
 };
 
+// --------------------------------------------------------------------------
 struct LoadConfirmationWaiting {
+    inline static auto TTL = std::chrono::minutes{5};
+
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: LoadConfirmationWaiting");
+            ctx.startTimer(TTL);
+        };
+    }
+    static constexpr auto on_exit()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("EXIT: LoadConfirmationWaiting");
+            ctx.cancelTimer();
         };
     }
 };
 
+// --------------------------------------------------------------------------
 struct CheckCalibrationPoint {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) {
-            spdlog::info("ENTRY: CheckCalibrationPoint");
-        };
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) { spdlog::info("ENTRY: CheckCalibrationPoint"); };
     }
 };
 
+// --------------------------------------------------------------------------
 struct MoveToCalibrationPoint {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: MoveToCalibrationPoint");
-            spdlog::info("    --> Send go to points {}", ctx.points[0]);
+            ctx.send_go_to_point();
         };
     }
 };
 
+// --------------------------------------------------------------------------
 struct MoveToCalibrationPointWaiting {
+    inline static auto TTL = std::chrono::seconds{5};
+
     static constexpr auto on_entry()
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: MoveToCalibrationPointWaiting");
-            spdlog::info("    --> Remove a point");
-            ctx.points.erase(ctx.points.begin());
+            ctx.remove_point();
+            ctx.startTimer(TTL);
+        };
+    }
+
+    static constexpr auto on_exit()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("EXIT: SnapshotReplyWaiting");
+            ctx.cancelTimer();
+            ctx.find_bevel();
         };
     }
 };
 
+// --------------------------------------------------------------------------
 struct SnapshotRequest {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: SnapshotRequest");
-            spdlog::info("    --> Send a snapshot request");
+            ctx.send_snapshot_request();
         };
     }
 };
 
+// --------------------------------------------------------------------------
 struct SnapshotReplyWaiting {
+    inline static auto TTL = std::chrono::seconds{2};
+
     static constexpr auto on_entry()
     {
-        return
-            [](const auto& event, const auto& source, const auto& target, const auto& ctx) { spdlog::info("ENTRY: SnapshotReplyWaiting"); };
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("ENTRY: SnapshotReplyWaiting");
+            ctx.startTimer(TTL);
+        };
     }
 
     static constexpr auto on_exit()
@@ -115,36 +167,65 @@ struct SnapshotReplyWaiting {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("EXIT: SnapshotReplyWaiting");
             spdlog::info("    --> Find Bevel");
+            ctx.cancelTimer();
         };
     }
 };
 
+// --------------------------------------------------------------------------
 struct ComputeTransform {
     static constexpr auto on_entry()
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: ComputeTransform");
-            spdlog::info("    --> Compute transform");
+            ctx.compute_transform();
         };
     }
 };
 
-struct InitCalibration {
+// --------------------------------------------------------------------------
+struct InitCalibrationWaiting {
+    inline static auto TTL = std::chrono::seconds{5};
+
     static constexpr auto on_entry()
     {
-        return
-            [](const auto& event, const auto& source, const auto& target, const auto& ctx) { spdlog::info("ENTRY: InitStartCalibration"); };
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("ENTRY: InitStartCalibration");
+            ctx.startTimer(TTL);
+        };
     }
 };
-struct WaitingInitCalibrationIHM {};
-struct WaitingInitCalibrationRobot {};
 
+// --------------------------------------------------------------------------
+struct InitCalibrationIHMWaiting {
+    static constexpr auto on_exit()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("EXIT: InitCalibrationIHMWaiting");
+            ctx.cancelTimer();
+        };
+    }
+};
+
+// --------------------------------------------------------------------------
+struct InitCalibrationRobotWaiting {
+    static constexpr auto on_exit()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("EXIT: InitCalibrationRobotWaiting");
+            ctx.cancelTimer();
+        };
+    }
+};
+
+// --------------------------------------------------------------------------
 struct Calibration_IR_Robot {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, const auto& ctx) {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: Calibration_IR_Robot");
-            spdlog::info("    --> Send DisplayCalibration to IHM and Send go to home pose to Robot");
+            ctx.send_display_calibration_screen();
+            ctx.send_go_home();
         };
     }
 
@@ -154,12 +235,13 @@ struct Calibration_IR_Robot {
         return hsm::transition_table(
               // Source                                 + Event                        [Guard]       / Action          = Target
               // +--------------------------------------+-----------------------------+--------------+-----------------+-----------------------------------------+
-            * hsm::state<InitCalibration>               + hsm::event<ack_display_ihm>                / log_action = hsm::state<WaitingInitCalibrationRobot>,
-              hsm::state<InitCalibration>               + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<WaitingInitCalibrationIHM>,
-              hsm::state<WaitingInitCalibrationRobot>   + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<GoToLoadingPose>,
-              hsm::state<WaitingInitCalibrationRobot>   + hsm::event<timeout>                        / log_action = hsm::state<Error>,
-              hsm::state<WaitingInitCalibrationIHM>     + hsm::event<ack_display_ihm>                / log_action = hsm::state<GoToLoadingPose>,
-              hsm::state<WaitingInitCalibrationIHM>     + hsm::event<timeout>                        / log_action = hsm::state<Error>,
+            * hsm::state<InitCalibrationWaiting>        + hsm::event<ack_display_ihm>                / log_action = hsm::state<InitCalibrationRobotWaiting>,
+              hsm::state<InitCalibrationWaiting>        + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<InitCalibrationIHMWaiting>,
+              hsm::state<InitCalibrationWaiting>        + hsm::event<timeout>                        / log_action = hsm::state<Error>,
+              hsm::state<InitCalibrationRobotWaiting>   + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<GoToLoadingPose>,
+              hsm::state<InitCalibrationRobotWaiting>   + hsm::event<timeout>                        / log_action = hsm::state<Error>,
+              hsm::state<InitCalibrationIHMWaiting>     + hsm::event<ack_display_ihm>                / log_action = hsm::state<GoToLoadingPose>,
+              hsm::state<InitCalibrationIHMWaiting>     + hsm::event<timeout>                        / log_action = hsm::state<Error>,
               hsm::state<GoToLoadingPose>                                                            / log_action = hsm::state<GoToLoadingPoseWaiting>,
               hsm::state<GoToLoadingPoseWaiting>        + hsm::event<ack_load_pose_robot>            / log_action = hsm::state<LoadConfirmation>,
               hsm::state<GoToLoadingPoseWaiting>        + hsm::event<timeout>                        / log_action = hsm::state<Error>,
