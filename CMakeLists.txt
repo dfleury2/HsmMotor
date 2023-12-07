@@ -59,6 +59,9 @@ target_link_libraries(sml-entry-exit PUBLIC sml::sml fmt::fmt)
 add_executable(entry-exit entry-exit.cpp)
 target_link_libraries(entry-exit PUBLIC hsm::hsm)
 
+add_executable(entry-exit-substate entry-exit-substate.cpp)
+target_link_libraries(entry-exit-substate PUBLIC hsm::hsm)
+
 add_executable(sequence_calibration sequence_calibration.cpp)
 target_link_libraries(sequence_calibration PUBLIC hsm::hsm fmt::fmt Boost::boost)
 

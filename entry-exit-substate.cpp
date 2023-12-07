@@ -4,8 +4,6 @@
 
 #include "utils.hpp"
 
-using namespace boost::hana;
-
 #define ON_ENTRY(STATE)                                                                                                                   \
     static constexpr auto on_entry()                                                                                                      \
     {                                                                                                                                     \
@@ -23,64 +21,27 @@ using namespace boost::hana;
     ON_EXIT(STATE)
 
 namespace ee {
+struct Idle {
+    ON(Idle);
+};
+
 struct A0 {
-    //        static constexpr auto on_entry() {
-    //            return [](const auto &event, const auto &source, const auto &target) {
-    //                std::cout << "      -- ON_ENTRY: State Src [" << experimental::print(typeid_(source)) << "], State Dst[" <<
-    //                boost::hana::experimental::print(typeid_(target)) << "], Event [" << boost::hana::experimental::print(typeid_(event))
-    //                << "]" << std::endl;
-    //            };
-    //        }
-    //        static constexpr auto on_exit() {
-    //            return [](const auto &event, const auto &source, const auto &target) {
-    //                std::cout << "      -- ON_EXIT: State Src [" << boost::hana::experimental::print(typeid_(source)) << "], State Dst["
-    //                << boost::hana::experimental::print(typeid_(target)) << "], Event [" <<
-    //                boost::hana::experimental::print(typeid_(event)) << "]" << std::endl;
-    //            };
-    //        }
     ON(A0);
 };
 // --------------------------------------------------------------------------
 // States
 struct A1 {
-    //        static constexpr auto on_entry() {
-    //            return [](const auto &event, const auto &source, const auto &target) {
-    //                std::cout << "      -- ON_ENTRY: State Src [" << experimental::print(typeid_(source)) << "], State Dst[" <<
-    //                boost::hana::experimental::print(typeid_(target)) << "], Event [" << boost::hana::experimental::print(typeid_(event))
-    //                << "]" << std::endl;
-    //            };
-    //        }
-    //        static constexpr auto on_exit() {
-    //            return [](const auto &event, const auto &source, const auto &target) {
-    //                std::cout << "      -- ON_EXIT: State Src [" << boost::hana::experimental::print(typeid_(source)) << "], State Dst["
-    //                << boost::hana::experimental::print(typeid_(target)) << "], Event [" <<
-    //                boost::hana::experimental::print(typeid_(event)) << "]" << std::endl;
-    //            };
-    //        }
     ON(A1);
 };
 
 struct A2 {
-    //        static constexpr auto on_entry() {
-    //            return [](const auto &event, const auto &source, const auto &target) {
-    //                std::cout << "      -- ON_ENTRY: State Src [" << boost::hana::experimental::print(typeid_(source)) << "], State Dst["
-    //                << boost::hana::experimental::print(typeid_(target)) << "], Event [" <<
-    //                boost::hana::experimental::print(typeid_(event)) << "]" << std::endl;
-    //            };
-    //        }
-    //        static constexpr auto on_exit() {
-    //            return [](const auto &event, const auto &source, const auto &target) {
-    //                std::cout << "      -- ON_EXIT: State Src [" << boost::hana::experimental::print(typeid_(source)) << "], State Dst["
-    //                << boost::hana::experimental::print(typeid_(target)) << "], Event [" <<
-    //                boost::hana::experimental::print(typeid_(event)) << "]" << std::endl;
-    //            };
-    //        }
     ON(A2);
 };
 
 // --------------------------------------------------------------------------
 // Events
 struct press {};
+struct start {};
 
 // --------------------------------------------------------------------------
 // Guard
@@ -94,7 +55,7 @@ const auto log = [](auto event, auto source, auto target, const char* msg = "") 
 
 // --------------------------------------------------------------------------
 // State machines
-struct InitialEntryExit {
+struct SubStateEntryExit {
     static constexpr auto make_transition_table()
     {
         // clang-format off
@@ -116,12 +77,35 @@ struct InitialEntryExit {
         return [](auto& event, const auto& state) { log(event, state, state, "unexpected event: "); };
     }
 };
+
+struct InitialEntryExit {
+    static constexpr auto make_transition_table()
+    {
+        // clang-format off
+            return hsm::transition_table(
+                // Source              + Event            [Guard]   / Action  = Target
+                // +-------------------+------------------+---------+---------+----------------------+
+                * hsm::state<Idle>       + hsm::event<start>          / log     = hsm::state<SubStateEntryExit>
+                );
+
+        // clang-format on
+    }
+
+    ON(InitialEntryExit);
+
+    static constexpr auto on_unexpected_event()
+    {
+        return [](auto& event, const auto& state) { log(event, state, state, "unexpected event: "); };
+    }
+};
+
 }   // namespace ee
 
 int main()
 {
     hsm::sm<ee::InitialEntryExit> fsm;
 
+    fsm.process_event(ee::start{});
     for (int i = 0; i < 10; ++i) {
         std::cout << "----- process_event(press) ----- " << std::endl;
         fsm.process_event(ee::press{});

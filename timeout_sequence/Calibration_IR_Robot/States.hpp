@@ -221,6 +221,7 @@ struct Calibration_IR_Robot {
               // +--------------------------------------+-----------------------------+--------------+-----------------+-----------------------------------------+
             * hsm::state<InitCalibrationWaiting>        + hsm::event<ack_display_gui>                / log_action = hsm::state<InitCalibrationRobotWaiting>,
               hsm::state<InitCalibrationWaiting>        + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<InitCalibrationIHMWaiting>,
+              hsm::state<InitCalibrationWaiting>        + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<InitCalibrationIHMWaiting>,
               hsm::state<InitCalibrationWaiting>        + hsm::event<timeout>                        / log_action = hsm::state<Error>,
               hsm::state<InitCalibrationRobotWaiting>   + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<GoToLoadingPose>,
               hsm::state<InitCalibrationRobotWaiting>   + hsm::event<timeout>                        / log_action = hsm::state<Error>,
