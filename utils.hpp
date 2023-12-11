@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include <typeinfo>
+#include <vector>
 
 #ifdef __linux__
 #include <cxxabi.h>

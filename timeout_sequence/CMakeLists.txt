@@ -18,5 +18,5 @@ target_link_libraries(timeout_sequence_calibration
         fmt::fmt
         Boost::boost
         spdlog::spdlog
-        #bhc-commons::bhc-commons
+        bhc-commons::bhc-commons
 )

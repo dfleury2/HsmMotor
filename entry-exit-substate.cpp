@@ -2,16 +2,24 @@
 
 #include <iostream>
 
-#define ON_ENTRY(STATE)                                                                                                                   \
-    static constexpr auto on_entry()                                                                                                      \
-    {                                                                                                                                     \
-        return [](const auto& event, const auto& source, const auto& target) { std::cout << "      -- ENTRY: " << #STATE << std::endl; }; \
+#include "utils.hpp"
+
+#define ON_ENTRY(STATE)                                                                                                            \
+    static constexpr auto on_entry()                                                                                               \
+    {                                                                                                                              \
+        return [](const auto& event, const auto& source, const auto& target) {                                                     \
+            std::cout << "      -- ENTRY: " << #STATE << " (source=" << demangle(source) << ", target:" << demangle(target) << ")" \
+                      << std::endl;                                                                                                \
+        };                                                                                                                         \
     }
 
-#define ON_EXIT(STATE)                                                                                                                   \
-    static constexpr auto on_exit()                                                                                                      \
-    {                                                                                                                                    \
-        return [](const auto& event, const auto& source, const auto& target) { std::cout << "      -- EXIT: " << #STATE << std::endl; }; \
+#define ON_EXIT(STATE)                                                                                                            \
+    static constexpr auto on_exit()                                                                                               \
+    {                                                                                                                             \
+        return [](const auto& event, const auto& source, const auto& target) {                                                    \
+            std::cout << "      -- EXIT: " << #STATE << " (source=" << demangle(source) << ", target:" << demangle(target) << ")" \
+                      << std::endl;                                                                                               \
+        };                                                                                                                        \
     }
 
 #define ON(STATE)   \
@@ -49,7 +57,7 @@ const auto success = [](auto /*event*/, auto /*source*/, auto /*target*/) { retu
 // --------------------------------------------------------------------------
 // Actions
 const auto log = [](auto event, auto source, auto target, const char* msg = "") {
-    std::cout << msg << typeid(source).name() << " + " << typeid(event).name() << " = " << typeid(target).name() << std::endl;
+    std::cout << msg << demangle(source) << " + " << demangle(event) << " = " << demangle(target) << std::endl;
 };
 
 // --------------------------------------------------------------------------
@@ -108,6 +116,7 @@ int main()
     {
         hsm::sm<ee::Initial> fsm;
 
+        std::cout << "----- process_event(start) ----- " << std::endl;
         fsm.process_event(ee::start{});
 
         for (int i = 0; i < 4; ++i) {
