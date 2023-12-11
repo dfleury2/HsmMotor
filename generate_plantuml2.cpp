@@ -30,10 +30,10 @@ struct EventGuardAction {
             os << " + E: [" << t.event.value() << "]";
         }
         if (t.guard) {
-            os << " [" << t.guard.value() << "]";
+            os << " G: [" << t.guard.value() << "]";
         }
         if (t.action) {
-            os << " / " << t.action.value();
+            os << " / A: " << t.action.value();
         }
         os << " => T: [" << t.target << "]";
 
@@ -145,7 +145,6 @@ EventGuardAction ExtractTransitionInformation(const std::string& line)
         static const std::regex re_event("hsm::event<(.*)>");
         t.event = std::regex_replace(t.event.value(), re_event, "$1");
     }
-
 
     return t;
 }
