@@ -8,6 +8,13 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    // Using multiple regex_search
+    std::regex re_source(R"(hsm::state<\s*(\w*)\s*>.*=)");
+    std::regex re_target(R"(=\s*hsm::state<\s*(\w*)\s*>)");
+    std::regex re_event(R"(\+\s*hsm::event<\s*(\w*)\s*>)");
+    std::regex re_guard(R"(\[\s*(\w*)\s*\])");
+
+
     std::regex re{// source
                   R"(hsm::state<(\w*)>\s*)"
                   // optional event
