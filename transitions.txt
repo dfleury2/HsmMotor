@@ -1,0 +1,7 @@
+hsm::state<A>  = hsm::state<B>
+hsm::state<A> + hsm::event<e> = hsm::state<B>
+hsm::state<A> [guard] = hsm::state<B>
+hsm::state<A> / action = hsm::state<B>
+hsm::state<A> + hsm::event<e> [guard] = hsm::state<B>
+hsm::state<A> [guard] / action = hsm::state<B>
+hsm::state<A> + hsm::event<e> [guard] / action = hsm::state<B>
