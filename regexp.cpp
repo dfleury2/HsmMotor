@@ -9,10 +9,10 @@ using namespace std;
 int main(int argc, char* argv[])
 {
     std::regex re{// source
-                  R"(hsm::state<(\w)>\s*)"
+                  R"(hsm::state<(\w*)>\s*)"
                   // optional event
                   R"(\+?\s*)"
-                  R"((?:hsm::event<)?(\w*)(?:>)?\s*)"
+                  R"((?:hsm::event<)?(\w*)?(?:>)?\s*)"
                   // optional guard
                   R"(\[?(\w*)\]?\s*)"
                   // optional action
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
                   R"((\w*)\s*)"
                   // target
                   R"(=\s*)"
-                  R"(hsm::state<(\w)>)"};
+                  R"(hsm::state<(\w*)>)"};
 
     ifstream file(argv[1]);
 
