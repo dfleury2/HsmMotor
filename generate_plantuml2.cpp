@@ -154,6 +154,7 @@ EventGuardAction ExtractTransitionInformation(const std::string& line)
 int main(int argc, char* argv[])
 {
     std::unordered_map<std::string, State> states;
+    std::vector<std::string> state_machines;
 
     for (int i = 1; i < argc; ++i) {
         ifstream file(argv[i]);
@@ -224,6 +225,8 @@ int main(int argc, char* argv[])
 
                     states[currentState].is_state_machine = true;
 
+                    state_machines.push_back(currentState);
+
                     std::string inner_line;
                     do {
                     } while (getline(file, inner_line) && inner_line.find("hsm::") == std::string::npos);
@@ -254,6 +257,11 @@ int main(int argc, char* argv[])
 
     for (auto&& [name, s] : states) {
         cout << "-------------------- " << name << "\n";
+        cout << s << endl;
+    }
+
+    cout << "-------------------- StateMachines\n";
+    for (auto&& s : state_machines) {
         cout << s << endl;
     }
 
