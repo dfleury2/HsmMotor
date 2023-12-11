@@ -18,13 +18,13 @@ class CalibrationContext {
         // TODO
     }
 
-    void startTimer(const std::chrono::steady_clock::duration& d)
+    void start_timer(const std::chrono::steady_clock::duration& d)
     {
         spdlog::info("    --> Start Timer {}s", std::chrono::duration_cast<std::chrono::duration<double>>(d).count());
         sequencer.get().startTimer(d);
     }
 
-    void cancelTimer()
+    void cancel_timer()
     {
         spdlog::info("    --> Cancel Timer");
         sequencer.get().cancelTimer();

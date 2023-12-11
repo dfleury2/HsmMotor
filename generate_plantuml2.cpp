@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <vector>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -24,6 +25,9 @@ struct State {
     bool is_initial = false;
     bool has_on_entry = false;
     bool has_on_exit = false;
+
+    std::vector<std::string> entry_actions;
+    std::vector<std::string> exit_actions;
 
     std::list<EventGuardAction> transitions;
 };
@@ -49,7 +53,7 @@ int main(int argc, char* argv[])
             bool is_hsm = line.find("hsm::") != std::string::npos;
 
             if (is_struct || is_on_entry || is_on_exit || is_transition_table || is_hsm) {
-                cout << "                   [" << (!is_struct ? "    " : "") << line << "]" << endl;
+                //cout << "                   [" << (!is_struct ? "    " : "") << line << "]" << endl;
 
                 if (is_struct) {
                     currentState = trim(line.substr(6), " {");
@@ -59,12 +63,44 @@ int main(int argc, char* argv[])
                 else if (is_on_entry) {
                     states[currentState].has_on_entry = true;
                     cout << "   on_entry detected" << endl;
+
+                    auto curly_bracket_count = std::count(begin(line), end(line), '{');
+
+                    for (std::string inner_line; getline(file, inner_line);) {
+                        curly_bracket_count +=  std::count(begin(inner_line), end(inner_line), '{') -  std::count(begin(inner_line), end(inner_line), '}');
+
+                        if (inner_line.find("ctx.") != std::string::npos) {
+                            cout << "      action detected: " << inner_line << endl;
+                            states[currentState].entry_actions.push_back(inner_line);
+                        }
+
+                        if (curly_bracket_count == 0) {
+                            break;
+                        }
+                    }
                 }
                 else if (is_on_exit) {
                     states[currentState].has_on_exit = true;
                     cout << "   on_exit detected" << endl;
+
+                    auto curly_bracket_count = std::count(begin(line), end(line), '{');
+
+                    for (std::string inner_line; getline(file, inner_line);) {
+                        curly_bracket_count +=  std::count(begin(inner_line), end(inner_line), '{') -  std::count(begin(inner_line), end(inner_line), '}');
+
+                        if (inner_line.find("ctx.") != std::string::npos) {
+                            cout << "      action detected: " << inner_line << endl;
+                            states[currentState].exit_actions.push_back(inner_line);
+                        }
+
+                        if (curly_bracket_count == 0) {
+                            break;
+                        }
+                    }
                 }
                 else if (is_transition_table) {
+                    cout << "   transition table detected" << endl;
+
                     std::string inner_line;
                     do {
                     } while (getline(file, inner_line) && inner_line.find("hsm::") == std::string::npos);

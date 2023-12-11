@@ -7,8 +7,8 @@
 
 #include "../../utils.hpp"
 
-#include <spdlog/spdlog.h>
 #include <hsm/hsm.h>
+#include <spdlog/spdlog.h>
 
 // --------------------------------------------------------------------------
 // States
@@ -31,7 +31,7 @@ struct GoToLoadingPoseWaiting {
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: GoToLoadingPoseWaiting");
-            ctx.startTimer(TTL);
+            ctx.start_timer(TTL);
         };
     }
 
@@ -39,7 +39,7 @@ struct GoToLoadingPoseWaiting {
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("EXIT: GoToLoadingPoseWaiting");
-            ctx.cancelTimer();
+            ctx.cancel_timer();
         };
     }
 };
@@ -63,14 +63,14 @@ struct LoadConfirmationWaiting {
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: LoadConfirmationWaiting");
-            ctx.startTimer(TTL);
+            ctx.start_timer(TTL);
         };
     }
     static constexpr auto on_exit()
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("EXIT: LoadConfirmationWaiting");
-            ctx.cancelTimer();
+            ctx.cancel_timer();
         };
     }
 };
@@ -103,7 +103,7 @@ struct MoveToCalibrationPointWaiting {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: MoveToCalibrationPointWaiting");
             ctx.remove_point();
-            ctx.startTimer(TTL);
+            ctx.start_timer(TTL);
         };
     }
 
@@ -111,7 +111,7 @@ struct MoveToCalibrationPointWaiting {
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("EXIT: SnapshotReplyWaiting");
-            ctx.cancelTimer();
+            ctx.cancel_timer();
             ctx.find_bevel();
         };
     }
@@ -136,7 +136,7 @@ struct SnapshotReplyWaiting {
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: SnapshotReplyWaiting");
-            ctx.startTimer(TTL);
+            ctx.start_timer(TTL);
         };
     }
 
@@ -145,7 +145,7 @@ struct SnapshotReplyWaiting {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("EXIT: SnapshotReplyWaiting");
             spdlog::info("    --> Find Bevel");
-            ctx.cancelTimer();
+            ctx.cancel_timer();
         };
     }
 };
@@ -169,7 +169,7 @@ struct InitCalibrationWaiting {
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("ENTRY: InitCalibrationWaiting");
-            ctx.startTimer(TTL);
+            ctx.start_timer(TTL);
         };
     }
 };
@@ -180,7 +180,7 @@ struct InitCalibrationIHMWaiting {
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("EXIT: InitCalibrationIHMWaiting");
-            ctx.cancelTimer();
+            ctx.cancel_timer();
         };
     }
 };
@@ -191,7 +191,7 @@ struct InitCalibrationRobotWaiting {
     {
         return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
             spdlog::info("EXIT: InitCalibrationRobotWaiting");
-            ctx.cancelTimer();
+            ctx.cancel_timer();
         };
     }
 };
@@ -208,9 +208,7 @@ struct Calibration_IR_Robot {
     }
     static constexpr auto on_exit()
     {
-        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
-            spdlog::info("EXIT: Calibration_IR_Robot");
-        };
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) { spdlog::info("EXIT: Calibration_IR_Robot"); };
     }
 
     static constexpr auto make_transition_table()
