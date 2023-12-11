@@ -9,23 +9,22 @@ using namespace std;
 int main(int argc, char* argv[])
 {
     std::regex re{// source
-                  R"(hsm::state<(\w)>)"
+                  R"(hsm::state<(\w)>\s*)"
                   // optional event
-                  R"(\+?)"
-                  R"((?:hsm::event<)?(\w*)(?:>)?)"
+                  R"(\+?\s*)"
+                  R"((?:hsm::event<)?(\w*)(?:>)?\s*)"
                   // optional guard
-                  R"(\[?(\w*)\]?)"
+                  R"(\[?(\w*)\]?\s*)"
                   // optional action
-                  R"(/?)"
-                  R"((\w*))"
+                  R"(/?\s*)"
+                  R"((\w*)\s*)"
                   // target
-                  R"(=)"
+                  R"(=\s*)"
                   R"(hsm::state<(\w)>)"};
 
     ifstream file(argv[1]);
 
     for (std::string line; getline(file, line);) {
-        line.erase(std::remove_if(begin(line), end(line), [](auto c) { return std::isspace(c); }), end(line));
         cout << "[" << line << "]" << endl;
 
         std::smatch match;
