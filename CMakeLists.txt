@@ -18,8 +18,8 @@ project(HsmStepperMotor)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(generate_plantuml_old generate_plantuml.cpp)
-add_executable(generate_plantuml generate_plantuml2.cpp)
+add_executable(generate_plantuml_old generate_plantuml_old.cpp)
+add_executable(generate_plantuml generate_plantuml.cpp)
 target_link_libraries(generate_plantuml PUBLIC fmt::fmt)
 
 add_executable(regexp regexp.cpp)
