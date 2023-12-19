@@ -7,4 +7,4 @@ add_executable(tricolor_light_gui
         TricolorMainWindow.hpp
         ui/TricolorMainWindow.ui)
 
-target_link_libraries(tricolor_light_gui PUBLIC hsm::hsm fmt::fmt qt::qt)
+target_link_libraries(tricolor_light_gui PUBLIC simple-hsm::simple-hsm fmt::fmt qt::qt)

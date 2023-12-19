@@ -4,7 +4,7 @@
 
 #include "utils.hpp"
 
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 
 #define ON_ENTRY()                                                                                           \
     static constexpr auto on_entry() {                                                                                \

@@ -1,7 +1,7 @@
 [requires]
 bhc-commons/1.0.0-alpha.2@bhc/stable
-boost/1.81.0
-erikzenker-hsm/2.3.0
+simple-hsm/2.3.0.1
+
 doctest/2.4.10
 qt/6.5.0
 fmt/9.1.0

@@ -1,5 +1,5 @@
 #include <fmt/color.h>
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 
 #include <chrono>
 #include <iostream>

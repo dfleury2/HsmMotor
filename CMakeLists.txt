@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 CONFIG REQUIRED)
 find_package(bhc-commons CONFIG REQUIRED)
 find_package(Boost CONFIG REQUIRED)
-find_package(hsm CONFIG REQUIRED)
+find_package(simple-hsm CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 #find_package(sml CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
@@ -32,7 +32,7 @@ add_executable(motor-action
         StepperMotor.cpp
 )
 
-target_link_libraries(motor-action PUBLIC hsm::hsm qt::qt)
+target_link_libraries(motor-action PUBLIC simple-hsm::simple-hsm qt::qt)
 
 add_executable(motor-action-gui
         main-gui.cpp
@@ -43,7 +43,7 @@ add_executable(motor-action-gui
         MotorWindow.cpp
 )
 
-target_link_libraries(motor-action-gui PUBLIC hsm::hsm qt::qt fmt::fmt)
+target_link_libraries(motor-action-gui PUBLIC simple-hsm::simple-hsm qt::qt fmt::fmt)
 
 if(WIN32)
     target_link_libraries(motor-action-gui
@@ -56,29 +56,29 @@ endif()
 
 
 add_executable(hsm-entry-exit hsm-entry-exit.cpp)
-target_link_libraries(hsm-entry-exit PUBLIC hsm::hsm fmt::fmt)
+target_link_libraries(hsm-entry-exit PUBLIC simple-hsm::simple-hsm fmt::fmt)
 
 #add_executable(sml-entry-exit sml-entry-exit.cpp_)
 #target_link_libraries(sml-entry-exit PUBLIC sml::sml fmt::fmt)
 
 add_executable(entry-exit entry-exit.cpp)
-target_link_libraries(entry-exit PUBLIC hsm::hsm)
+target_link_libraries(entry-exit PUBLIC simple-hsm::simple-hsm)
 
 add_executable(entry-exit-substate entry-exit-substate.cpp)
-target_link_libraries(entry-exit-substate PUBLIC hsm::hsm)
+target_link_libraries(entry-exit-substate PUBLIC simple-hsm::simple-hsm)
 
 add_executable(sequence_calibration sequence_calibration.cpp)
-target_link_libraries(sequence_calibration PUBLIC hsm::hsm fmt::fmt Boost::boost)
+target_link_libraries(sequence_calibration PUBLIC simple-hsm::simple-hsm fmt::fmt Boost::boost)
 
 
 add_executable(tricolor_light tricolor_light.cpp)
-target_link_libraries(tricolor_light PUBLIC hsm::hsm fmt::fmt)
+target_link_libraries(tricolor_light PUBLIC simple-hsm::simple-hsm fmt::fmt)
 
 add_executable(tricolor_light_on_off tricolor_light_on_off.cpp)
-target_link_libraries(tricolor_light_on_off PUBLIC hsm::hsm fmt::fmt)
+target_link_libraries(tricolor_light_on_off PUBLIC simple-hsm::simple-hsm fmt::fmt)
 
 add_executable(tricolor_light_on_off_timestamp tricolor_light_on_off_timestamp.cpp)
-target_link_libraries(tricolor_light_on_off_timestamp PUBLIC hsm::hsm fmt::fmt)
+target_link_libraries(tricolor_light_on_off_timestamp PUBLIC simple-hsm::simple-hsm fmt::fmt)
 
 enable_testing()
 

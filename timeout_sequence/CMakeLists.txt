@@ -14,7 +14,7 @@ add_executable(timeout_sequence_calibration
 
 target_link_libraries(timeout_sequence_calibration
     PUBLIC
-        hsm::hsm
+        simple-hsm::simple-hsm
         fmt::fmt
         Boost::boost
         spdlog::spdlog

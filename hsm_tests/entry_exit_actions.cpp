@@ -1,7 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 
 #include <future>
 #include <iostream>

@@ -40,7 +40,7 @@ ComputeTransform --> Idle
 #include "utils.hpp"
 
 #include <fmt/format.h>
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 
 #include <iostream>
 #include <string>

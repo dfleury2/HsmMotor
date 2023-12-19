@@ -7,7 +7,7 @@
 
 #include "../../utils.hpp"
 
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 #include <spdlog/spdlog.h>
 
 // --------------------------------------------------------------------------

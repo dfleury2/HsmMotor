@@ -1,4 +1,4 @@
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 
 #include <cassert>
 #include <iostream>

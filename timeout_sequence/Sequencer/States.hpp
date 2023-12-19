@@ -5,7 +5,7 @@
 #include "../Commons/States.hpp"
 #include "../Calibration_IR_Robot/States.hpp"
 
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 
 // --------------------------------------------------------------------------
 // State Machine

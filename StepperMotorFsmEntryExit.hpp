@@ -2,7 +2,7 @@
 
 #include "StepperMotor.hpp"
 
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 
 //#define ON_ENTRY(className)                                                                                           \
 //    static constexpr auto on_entry() {                                                                                \

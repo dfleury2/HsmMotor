@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 
-#include <hsm/hsm.h>
+#include <simple-hsm/simple-hsm.hpp>
 
 namespace {
 
