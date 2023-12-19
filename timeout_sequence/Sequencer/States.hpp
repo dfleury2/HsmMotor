@@ -29,9 +29,9 @@ struct StateMachineSequencer {
         return hsm::transition_table(
                 // Source                                 + Event                         [Guard]  / Action  = Target
                 // +--------------------------------------+-----------------------------+---------+----------------------+
-              * hsm::state<Idle>                          + hsm::event<calibration_start>         / log_action = hsm::state<Calibration_IR_Robot>,
-                hsm::exit<Calibration_IR_Robot, Error>                                            / log_action = hsm::state<Idle>,
-                hsm::exit<Calibration_IR_Robot, Idle>                                             / log_action = hsm::state<Idle>
+              * hsm::state<Idle>                          + hsm::event<calibration_ir_robot_start>         / log_action = hsm::state<calibration_ir_robot::Calibration_IR_Robot>,
+                hsm::exit<calibration_ir_robot::Calibration_IR_Robot, Error>                      / log_action = hsm::state<Idle>,
+                hsm::exit<calibration_ir_robot::Calibration_IR_Robot, calibration_ir_robot::Done> / log_action = hsm::state<Idle>
         );
 
         // clang-format on

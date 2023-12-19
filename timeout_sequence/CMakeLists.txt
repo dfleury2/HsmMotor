@@ -5,6 +5,7 @@ add_executable(timeout_sequence_calibration
         Calibration_IR_Robot/Guards.hpp
         Calibration_IR_Robot/States.hpp
         Sequencer/Actions.hpp
+        Sequencer/Context.hpp
         Sequencer/Events.hpp
         Sequencer/Sequencer.hpp
         Sequencer/States.hpp

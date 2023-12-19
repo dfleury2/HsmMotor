@@ -1,39 +1,19 @@
 #pragma once
 
+#include <spdlog/spdlog.h>
+
 #include <vector>
 
-class Sequencer;
+namespace calibration_ir_robot {
 
 // --------------------------------------------------------------------------
 // Context
 template <typename Sequencer>
-class CalibrationContext {
+class CalibrationIrRobotContext {
   public:
-    explicit CalibrationContext(Sequencer& seq) : sequencer(seq) {}
+    explicit CalibrationIrRobotContext(Sequencer& seq) : sequencer(seq) {}
 
     std::vector<int> calibration_points = {1, 2, 3, 4, 5};
-
-    void idle() {
-        spdlog::info("    --> Idle");
-        // TODO
-    }
-
-    void start_timer(const std::chrono::steady_clock::duration& d)
-    {
-        spdlog::info("    --> Start Timer {}s", std::chrono::duration_cast<std::chrono::duration<double>>(d).count());
-        sequencer.get().startTimer(d);
-    }
-
-    void cancel_timer()
-    {
-        spdlog::info("    --> Cancel Timer");
-        sequencer.get().cancelTimer();
-    }
-
-    void error(const std::string& msg) {
-        spdlog::error("Error occurred: {}", msg);
-        // TODO
-    }
 
     void send_go_loading_pose()
     {
@@ -92,3 +72,5 @@ class CalibrationContext {
   private:
     std::reference_wrapper<Sequencer> sequencer;
 };
+
+}

@@ -72,7 +72,7 @@ int main()
         }
 
         if (command == "s") {
-            sequencer.put(calibration_start{});
+            sequencer.put(calibration_ir_robot_start{});
         }
         else if (command == "r") {
             sequencer.reset();
@@ -84,22 +84,22 @@ int main()
             sequencer.cancelTimer();
         }
         else if (command == "ai") {
-            sequencer.put(ack_display_gui{});
+            sequencer.put(calibration_ir_robot::ack_display_gui{});
         }
         else if (command == "ar") {
-            sequencer.put(ack_home_pose_robot{});
+            sequencer.put(calibration_ir_robot::ack_home_pose_robot{});
         }
         else if (command == "alp") {
-            sequencer.put(ack_load_pose_robot{});
+            sequencer.put(calibration_ir_robot::ack_load_pose_robot{});
         }
         else if (command == "alc") {
-            sequencer.put(ack_load_confirmation_gui{});
+            sequencer.put(calibration_ir_robot::ack_load_confirmation_gui{});
         }
         else if (command == "amp") {
-            sequencer.put(ack_move_point_robot{});
+            sequencer.put(calibration_ir_robot::ack_move_point_robot{});
         }
         else if (command == "as") {
-            sequencer.put(ack_snapshot{});
+            sequencer.put(calibration_ir_robot::ack_snapshot{});
         }
 
     } while (command != "q");

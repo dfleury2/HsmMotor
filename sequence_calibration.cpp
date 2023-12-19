@@ -50,12 +50,12 @@ using namespace std;
 
 
 // Context
-struct CalibrationContext {
+struct CalibrationIrRobotContext {
     vector<int> calibration_points = {1, 2, 3, 4, 5};
 };
 
 // Events
-struct calibration_start {};
+struct calibration_ir_robot_start {};
 struct ack_display_gui {};
 struct ack_home_pose_robot {};
 struct ack_load_pose_robot {};
@@ -210,7 +210,7 @@ struct StateMachineSequencer {
         return hsm::transition_table(
                 // Source                                 + Event                         [Guard]  / Action  = Target
                 // +--------------------------------------+-----------------------------+---------+----------------------+
-              * hsm::state<Idle>                          + hsm::event<calibration_start>         / log_action = hsm::state<Calibration_IR_Robot>,
+              * hsm::state<Idle>                          + hsm::event<calibration_ir_robot_start>         / log_action = hsm::state<Calibration_IR_Robot>,
                 hsm::exit<Calibration_IR_Robot, GoToLoadingPose>                                      / log_action = hsm::state<GoToLoadingPoseWaiting>,
                 hsm::state<GoToLoadingPoseWaiting>        + hsm::event<ack_load_pose_robot>       / log_action = hsm::state<LoadConfirmation>,
                 hsm::state<LoadConfirmation>                                                      / log_action = hsm::state<LoadConfirmationWaiting>,
@@ -235,9 +235,9 @@ struct StateMachineSequencer {
 };
 
 int main() {
-    CalibrationContext context;
+    CalibrationIrRobotContext context;
 
-    hsm::sm<StateMachineSequencer, CalibrationContext> sm{context};
+    hsm::sm<StateMachineSequencer, CalibrationIrRobotContext> sm{context};
 
     std::string command;
     do {
@@ -258,7 +258,7 @@ int main() {
         }
 
         if (command == "s") {
-            sm.process_event(calibration_start{});
+            sm.process_event(calibration_ir_robot_start{});
         } else if (command == "r") {
             sm = {context};
         } else if (command == "ai") {

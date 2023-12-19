@@ -10,6 +10,8 @@
 #include <simple-hsm/simple-hsm.hpp>
 #include <spdlog/spdlog.h>
 
+namespace calibration_ir_robot {
+
 // --------------------------------------------------------------------------
 // States
 // --------------------------------------------------------------------------
@@ -162,6 +164,22 @@ struct ComputeTransform {
 };
 
 // --------------------------------------------------------------------------
+struct InitCalibration {
+    static constexpr auto on_entry()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
+            spdlog::info("ENTRY: InitCalibration");
+            ctx.send_display_calibration_screen();
+            ctx.send_go_home();
+        };
+    }
+    static constexpr auto on_exit()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) { spdlog::info("EXIT: InitCalibration"); };
+    }
+};
+
+// --------------------------------------------------------------------------
 struct InitCalibrationWaiting {
     inline static auto TTL = std::chrono::seconds{5};
 
@@ -197,14 +215,18 @@ struct InitCalibrationRobotWaiting {
 };
 
 // --------------------------------------------------------------------------
+struct Done {
+    static constexpr auto on_entry()
+    {
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) { spdlog::info("ENTRY: Done"); };
+    }
+};
+
+// --------------------------------------------------------------------------
 struct Calibration_IR_Robot {
     static constexpr auto on_entry()
     {
-        return [](const auto& event, const auto& source, const auto& target, auto& ctx) {
-            spdlog::info("ENTRY: Calibration_IR_Robot");
-            ctx.send_display_calibration_screen();
-            ctx.send_go_home();
-        };
+        return [](const auto& event, const auto& source, const auto& target, auto& ctx) { spdlog::info("ENTRY: Calibration_IR_Robot"); };
     }
     static constexpr auto on_exit()
     {
@@ -217,7 +239,8 @@ struct Calibration_IR_Robot {
         return hsm::transition_table(
               // Source                                 + Event                        [Guard]       / Action          = Target
               // +--------------------------------------+-----------------------------+--------------+-----------------+-----------------------------------------+
-            * hsm::state<InitCalibrationWaiting>        + hsm::event<ack_display_gui>                / log_action = hsm::state<InitCalibrationRobotWaiting>,
+            * hsm::state<InitCalibration>                                                            / log_action = hsm::state<InitCalibrationWaiting>,
+              hsm::state<InitCalibrationWaiting>        + hsm::event<ack_display_gui>                / log_action = hsm::state<InitCalibrationRobotWaiting>,
               hsm::state<InitCalibrationWaiting>        + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<InitCalibrationIHMWaiting>,
               hsm::state<InitCalibrationWaiting>        + hsm::event<timeout>                        / log_action = hsm::state<Error>,
               hsm::state<InitCalibrationRobotWaiting>   + hsm::event<ack_home_pose_robot>            / log_action = hsm::state<GoToLoadingPose>,
@@ -238,8 +261,10 @@ struct Calibration_IR_Robot {
               hsm::state<SnapshotRequest>                                                            / log_action = hsm::state<SnapshotReplyWaiting>,
               hsm::state<SnapshotReplyWaiting>          + hsm::event<ack_snapshot>                   / log_action = hsm::state<CheckCalibrationPoint>,
               hsm::state<SnapshotReplyWaiting>          + hsm::event<timeout>                        / log_action = hsm::state<Error>,
-              hsm::state<ComputeTransform>                                                           / log_action = hsm::state<Idle>
+              hsm::state<ComputeTransform>                                                           / log_action = hsm::state<Done>
         );
         // clang-format on
     }
 };
+
+}   // namespace calibration_ir_robot

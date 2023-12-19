@@ -1,10 +1,9 @@
 #pragma once
 
+#include "Context.hpp"
 #include "Events.hpp"
 #include "States.hpp"
 #include "Timer.hpp"
-
-#include "../Calibration_IR_Robot/Context.hpp"
 
 #include <bhc/Task.hpp>
 
@@ -13,8 +12,10 @@
 #include <atomic>
 #include <thread>
 
-using TaskMessage = std::variant<reset, timeout, calibration_start, ack_display_gui, ack_home_pose_robot, ack_load_pose_robot,
-                                 ack_load_confirmation_gui, ack_move_point_robot, ack_snapshot>;
+using TaskMessage =
+    std::variant<reset, timeout, calibration_ir_robot_start, calibration_ir_robot::ack_display_gui, calibration_ir_robot::ack_home_pose_robot,
+                 calibration_ir_robot::ack_load_pose_robot, calibration_ir_robot::ack_load_confirmation_gui,
+                 calibration_ir_robot::ack_move_point_robot, calibration_ir_robot::ack_snapshot>;
 
 // --------------------------------------------------------------------------
 class Sequencer {
@@ -57,8 +58,8 @@ class Sequencer {
 
     void reset()
     {
-        calibrationContext = CalibrationContext{*this};
-        sm = {calibrationContext};
+        m_sequencer_context = SequencerContext{*this};
+        sm = {m_sequencer_context};
     }
 
     void startTimer(const std::chrono::steady_clock::duration& d)
@@ -84,8 +85,8 @@ class Sequencer {
     void handle(::reset&&) { this->reset(); }
 
   private:
-    CalibrationContext<Sequencer> calibrationContext{*this};
-    hsm::sm<StateMachineSequencer, CalibrationContext<Sequencer>> sm{calibrationContext};
+    SequencerContext<Sequencer> m_sequencer_context{*this};
+    hsm::sm<StateMachineSequencer, decltype(m_sequencer_context)> sm{m_sequencer_context};
 
     // Task
     bhc::Task<TaskMessage> m_task;

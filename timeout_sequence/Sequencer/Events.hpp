@@ -3,4 +3,4 @@
 struct timeout {};
 struct reset {};
 
-struct calibration_start {};
+struct calibration_ir_robot_start {};
