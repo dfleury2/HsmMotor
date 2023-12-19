@@ -23,7 +23,7 @@ inline std::string demangle(const char* mangled)
         return n;
     }
     else {
-        return {"demangle failure"};
+        return mangled;
     }
 #else
     return mangled;

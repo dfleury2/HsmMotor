@@ -84,5 +84,6 @@ enable_testing()
 
 add_subdirectory(hsm_example)
 add_subdirectory(hsm_tests)
+add_subdirectory(hsm_tuple)
 add_subdirectory(hsm_gui)
 add_subdirectory(timeout_sequence)
