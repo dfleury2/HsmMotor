@@ -8,10 +8,10 @@
 #include "../utils.hpp"
 
 #include <iostream>
+#include <tuple>
 #include <unordered_set>
 
 using namespace std;
-
 
 namespace ee {
 
@@ -81,17 +81,18 @@ struct MainState {
         // clang-format on
     }
 };
-}
+}   // namespace ee
 
-//constexpr auto is_initial_state = [](auto State) {
-//    if constexpr (std::is_base_of_v<hsm::InitialPseudoState, typename decltype(State)::type>) {
-//        return true;
-//    }
-//    return false;
-//};
+// constexpr auto is_initial_state = [](auto State) {
+//     if constexpr (std::is_base_of_v<hsm::InitialPseudoState, typename decltype(State)::type>) {
+//         return true;
+//     }
+//     return false;
+// };
 
-template<typename State>
-constexpr bool is_initial_state(State) {
+template <typename State>
+constexpr bool is_initial_state(State)
+{
     return std::is_base_of_v<hsm::InitialPseudoState, typename State::type>;
 };
 
@@ -104,7 +105,7 @@ void called(Transition t)
 
     std::cout << "  -  " << demangle(t.source()) << std::endl;
     if constexpr (is_initial_state(t.source())) {
-        cout <<  "     - is an initial state" << std::endl;
+        cout << "     - is an initial state" << std::endl;
         cout << "      - to  " << demangle<decltype(std::declval<typename decltype(t.source())::type>().get_state())>() << std::endl;
     }
 
@@ -114,7 +115,6 @@ void called(Transition t)
 
     Events.insert(typeid(decltype(std::declval<typename decltype(t.event())::type>())).name());
 
-
     std::cout << "  -  " << demangle(t.action()) << std::endl;
     std::cout << "  -  " << demangle(t.guard()) << std::endl;
     std::cout << "  -  " << demangle(t.target()) << std::endl;
@@ -122,10 +122,46 @@ void called(Transition t)
     cout << "        hash=  " << typeid(decltype(std::declval<typename decltype(t.target())::type>())).name() << std::endl;
 }
 
-template<typename Event>
-void process_event(Event e) {
-    if (!Events.count(typeid(e).name())) throw;
+template <typename T>
+auto func(T t)
+{
+    return decltype(std::declval<typename decltype(t)::type>()){};
 }
+
+template <typename... Args>
+auto funcs(Args... as)
+{
+    return std::make_tuple(func(as.event())...);
+}
+
+template <typename T, typename Tuple>
+struct my_has_type;
+
+template <typename T>
+struct my_has_type<T, std::tuple<>> : std::false_type {};
+
+template <typename T, typename U, typename... Ts>
+struct my_has_type<T, std::tuple<U, Ts...>> : my_has_type<T, std::tuple<Ts...>> {};
+
+template <typename T, typename... Ts>
+struct my_has_type<T, std::tuple<T, Ts...>> : std::true_type {};
+
+template <typename T, typename Tuple>
+using my_has_type_t = typename my_has_type<T, Tuple>::type;
+
+template <class RootState>
+struct Automate {
+    using Transitions = decltype(RootState::make_transition_table());
+
+    Automate() = default;
+
+    Transitions m_transitions = RootState::make_transition_table();
+
+    template <typename Event>
+    void process_event(Event e)
+    {
+    }
+};
 
 int main()
 {
@@ -133,11 +169,14 @@ int main()
 
     auto transitions = ee::MainState::make_transition_table();
 
-    std::apply([](const auto&... ts) { (called(ts), ...); }, transitions);
+    //    std::apply([](const auto&... ts) { (called(ts), ...); }, transitions);
+    //
+    //    for(auto&& e :  Events) {
+    //        cout << "Event: " << e << endl;
+    //    }
 
-    for(auto&& e :  Events) {
-        cout << "Event: " << e << endl;
-    }
+//    auto T = std::apply([](const auto&... ts) { return funcs(ts...); }, transitions);
 
-    //process_event(ee::S1{});
+    Automate<ee::MainState> sm;
+    sm.process_event(ee::S1{});
 }
