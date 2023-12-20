@@ -153,14 +153,22 @@ template <class RootState>
 struct Automate {
     using Transitions = decltype(RootState::make_transition_table());
 
-    Automate() = default;
+    Automate()  = default;
+
+    static constexpr auto extract_events(Transitions t) {
+        return std::apply([](const auto&... ts) { return funcs(ts...); }, t);
+    }
 
     Transitions m_transitions = RootState::make_transition_table();
+
+    using Events = decltype(extract_events(m_transitions));
 
     template <typename Event>
     void process_event(Event e)
     {
+        static_assert(my_has_type_t<Event, Events>::value, "Event not found");
     }
+
 };
 
 int main()
@@ -178,5 +186,5 @@ int main()
 //    auto T = std::apply([](const auto&... ts) { return funcs(ts...); }, transitions);
 
     Automate<ee::MainState> sm;
-    sm.process_event(ee::S1{});
+    sm.process_event(ee::e1{});
 }
