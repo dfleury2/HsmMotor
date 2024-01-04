@@ -123,9 +123,10 @@ void called(Transition t)
 }
 
 template <typename T>
-auto func(T t)
+auto func(T)
 {
-    return decltype(std::declval<typename decltype(t)::type>()){};
+    //return decltype(std::declval<typename decltype(t)::type>()){};
+    return decltype(std::declval<typename T::type>()){};
 }
 
 template <typename... Args>
@@ -164,24 +165,102 @@ struct Automate {
     using Events = decltype(extract_events(m_transitions));
 
     template <typename Event>
-    void process_event(Event e)
+    void process_event(Event)
     {
         static_assert(my_has_type_t<Event, Events>::value, "Event not found");
     }
 
 };
 
+
+template<class T> struct is_tuple : std::false_type {};
+template<class... Ts> struct is_tuple<std::tuple<Ts...>> : std::true_type {};
+
+template <typename... Ts>
+inline constexpr bool is_tuple_v = is_tuple<Ts...>::value;
+
+
+//template < typename T, typename ...Rest >
+//constexpr auto flatten( std::tuple< T, Rest... > )
+//{
+//    if constexpr ( is_tuple_v<T> )
+//    {
+//        if constexpr ( sizeof...( Rest ) > 0 ) {
+//            using remaining = decltype( flatten( std::tuple< Rest... >{} ) );
+//            return std::tuple_cat(flatten(std::tuple< T >{}), remaining{} );
+//        }
+//        else {
+//            return std::make_tuple(flatten(T{}));
+//        }
+//    }
+//    else
+//    {
+//        if constexpr ( sizeof...( Rest ) > 0 )
+//        {
+//            using remaining = decltype( flatten( std::tuple< Rest... >{} ) );
+//            return std::tuple_cat( std::tuple< T >{}, remaining{} );
+//        }
+//        else
+//        {
+//            return std::tuple< T >{};
+//        }
+//    }
+// }
+
+template <typename T>
+constexpr auto explode(T, std::size_t)
+{
+    return std::tuple<T>{};
+}
+
+template <typename T, std::size_t I = std::tuple_size<T>{}>
+constexpr auto explode(T, int);
+
+template <typename T, std::size_t... Is>
+constexpr auto explode(T, std::index_sequence<Is...>)
+{
+    return std::tuple_cat(explode(std::get<Is>(T{}), 0)...);
+}
+
+template <typename T, std::size_t I>
+constexpr auto explode(T, int)
+{
+    return explode(T{}, std::make_index_sequence<I>{});
+}
+
+template <typename T, std::size_t... Is>
+constexpr auto flatten(T, std::index_sequence<Is...>)
+{
+    return std::tuple_cat(explode(std::get<Is>(T{}), 0)...);
+}
+
+template <typename T>
+constexpr auto flatten(T)
+{
+    return flatten(T{}, std::make_index_sequence<std::tuple_size<T>{}>{});
+}
+
+
 int main()
 {
+    std::tuple<ee::e1, ee::e2, std::tuple<ee::S1, ee::e4>, ee::e3, ee::e4> es;
+
+    std::tuple<ee::S1, ee::S2> states1;
+    std::tuple<ee::S2, decltype(es)> states2;
+
+    constexpr auto s = std::tuple_cat(states1, states2);
+
+    constexpr auto f = flatten(s);
+
     //    hsm::sm<MainState> sm;
 
     auto transitions = ee::MainState::make_transition_table();
 
-    //    std::apply([](const auto&... ts) { (called(ts), ...); }, transitions);
-    //
-    //    for(auto&& e :  Events) {
-    //        cout << "Event: " << e << endl;
-    //    }
+        std::apply([](const auto&... ts) { (called(ts), ...); }, transitions);
+
+        for(auto&& e :  Events) {
+            cout << "Event: " << e << endl;
+        }
 
 //    auto T = std::apply([](const auto&... ts) { return funcs(ts...); }, transitions);
 
